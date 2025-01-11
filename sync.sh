@@ -1,1 +1,0 @@
-rsync -avh --delete --exclude-from=".gitignore" --exclude="yarn.lock" --exclude="apps/desktop/.webpack" --exclude="apps/desktop/out" --exclude=".git" ./ /Volumes/projects/electron-desktop-demo
