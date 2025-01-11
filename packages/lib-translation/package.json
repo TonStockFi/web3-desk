@@ -1,0 +1,21 @@
+{
+	"name": "@web3-explorer/lib-translation",
+	"version": "1.0.0",
+	"description": "",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"build": "tsc",
+		"start": "tsc -w",
+		"build:pkg": "rm -fr dist && yarn build"
+	},
+	"author": "",
+	"license": "",
+	"dependencies": {
+		"react": "^18.2.0",
+		"react-i18next": "^13.5.0"
+	},
+	"devDependencies": {
+		"@types/react": "^18.3.3"
+	}
+}

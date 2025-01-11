@@ -1,0 +1,93 @@
+{
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit",
+        "source.fixAll.eslint": "explicit",
+        "source.organizeImports": "explicit"
+    },
+    "javascript.format.enable": true,
+    "editor.formatOnSave": true,
+    "cSpell.words": [
+        "Tonendpoint"
+    ],
+    "favorites.resources": [
+        {
+            "filePath": "packages/locales/dist/locales/en/translation.json",
+            "group": "Default"
+        },
+        {
+            "filePath": "packages/locales/dist/locales/zh_CN/translation.json",
+            "group": "Default"
+        },
+        {
+            "filePath": "packages/locales/dist/locales/zh_TW/translation.json",
+            "group": "Default"
+        },
+        {
+            "filePath": "packages/locales/src/tonkeeper-web/zh-Hant.json",
+            "group": "Default"
+        },
+        {
+            "filePath": "packages/web3-app/src",
+            "group": "Default"
+        },
+        {
+            "filePath": "packages/locales/src/tonkeeper-web/en.json",
+            "group": "Default"
+        }
+    ],
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        "packages/core/.idea": true,
+        "packages/core/.turbo": true,
+        "packages/core/dist": true,
+        "packages/locales/dist": true,
+        "packages/uikit/dist": true,
+        "packages/uikit-desk/dist": true,
+        "packages/uikit-mui/dist": true,
+        "packages/uikit-view/dist": true,
+        "packages/utils/dist": true,
+        "packages/web3-app/dist": true,
+        "packages/opencv/dist": true,
+        "packages/lib-crypto/dist": true,
+        "packages/web3-app/.idea": true,
+        "packages/web3-app/.turbo": true,
+        "packages/web3-app/node_modules": true,
+        "packages/lib-crypto/node_modules": true,
+        ".idea": true,
+        ".turbo": true,
+        "packages/lib-crypto/.turbo": true,
+        "apps/desktop/.webpack": true,
+        "apps/desktop/node_modules": true,
+        "apps/desktop/out": true
+    },
+    "hide-files.files": [
+        "packages/core/.idea",
+        "packages/core/.turbo",
+        "packages/core/dist",
+        "packages/locales/dist",
+        "packages/uikit/dist",
+        "packages/uikit-desk/dist",
+        "packages/uikit-mui/dist",
+        "packages/uikit-view/dist",
+        "packages/utils/dist",
+        "packages/web3-app/dist",
+        "packages/opencv/dist",
+        "packages/lib-crypto/dist",
+        "packages/web3-app/.idea",
+        "packages/web3-app/.turbo",
+        "packages/web3-app/node_modules",
+        "packages/lib-crypto/node_modules",
+        ".idea",
+        ".turbo",
+        "packages/lib-crypto/.turbo",
+        "apps/desktop/.webpack",
+        "apps/desktop/node_modules",
+        "apps/desktop/out",
+        "apps/desktop/.turbo"
+    ]
+}

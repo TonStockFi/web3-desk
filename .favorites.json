@@ -1,0 +1,154 @@
+[
+    {
+        "type": "Group",
+        "name": "lang",
+        "parent_id": null,
+        "workspaceRoot": null,
+        "workspacePath": null,
+        "id": "AT6aZtrJ2F5Wl4di"
+    },
+    {
+        "type": "Group",
+        "name": "mui",
+        "parent_id": null,
+        "workspaceRoot": null,
+        "workspacePath": null,
+        "id": "W0UX1ZDjkHARNVnb"
+    },
+    {
+        "type": "Group",
+        "name": "view",
+        "parent_id": null,
+        "workspaceRoot": null,
+        "workspacePath": null,
+        "id": "1DBfChzV0TrYSp2v"
+    },
+    {
+        "type": "File",
+        "name": "/Users/ton/Desktop/projects/web3-explorer/packages/uikit-mui/src/mui/Icons.tsx",
+        "parent_id": "W0UX1ZDjkHARNVnb",
+        "workspaceRoot": "/Users/ton/Desktop/projects/web3-explorer",
+        "workspacePath": "packages/uikit-mui/src/mui/Icons.tsx",
+        "id": "0ZY7rebVmL8cJ3hO"
+    },
+    {
+        "type": "File",
+        "name": "/Users/ton/Desktop/projects/web3-explorer/packages/uikit-view/src/View/index.tsx",
+        "parent_id": "1DBfChzV0TrYSp2v",
+        "workspaceRoot": "/Users/ton/Desktop/projects/web3-explorer",
+        "workspacePath": "packages/uikit-view/src/View/index.tsx",
+        "id": "GdN3TcDYhekZPx4q"
+    },
+    {
+        "type": "File",
+        "name": "/Users/ton/Desktop/projects/web3-explorer/packages/locales/dist/locales/en/translation.json",
+        "parent_id": "AT6aZtrJ2F5Wl4di",
+        "workspaceRoot": "/Users/ton/Desktop/projects/web3-explorer",
+        "workspacePath": "packages/locales/dist/locales/en/translation.json",
+        "id": "dRxF1mH7QGrl3Oye"
+    },
+    {
+        "type": "File",
+        "name": "/Users/ton/Desktop/projects/web3-explorer/packages/locales/src/tonkeeper-web/zh-Hans-CN.json",
+        "parent_id": "AT6aZtrJ2F5Wl4di",
+        "workspaceRoot": "/Users/ton/Desktop/projects/web3-explorer",
+        "workspacePath": "packages/locales/src/tonkeeper-web/zh-Hans-CN.json",
+        "id": "YBye5DCxq3fp6cQA"
+    },
+    {
+        "type": "File",
+        "name": "/Users/ton/Desktop/projects/web3-explorer/packages/uikit/src/components/transfer/SendNotifications.tsx",
+        "parent_id": "AT6aZtrJ2F5Wl4di",
+        "workspaceRoot": "/Users/ton/Desktop/projects/web3-explorer",
+        "workspacePath": "packages/uikit/src/components/transfer/SendNotifications.tsx",
+        "id": "3SLoXZnVQiI5vWsh"
+    },
+    {
+        "type": "Group",
+        "name": "common",
+        "parent_id": "3SLoXZnVQiI5vWsh",
+        "workspaceRoot": null,
+        "workspacePath": null,
+        "id": "N7urkxUavGXKzop9"
+    },
+    {
+        "type": "Group",
+        "name": "Common",
+        "parent_id": null,
+        "workspaceRoot": null,
+        "workspacePath": null,
+        "id": "cXZ0pwWagnyu8BSq"
+    },
+    {
+        "type": "File",
+        "name": "/Users/ton/Desktop/projects/web3-explorer/packages/uikit/src/components/transfer/SendNotifications.tsx",
+        "parent_id": "cXZ0pwWagnyu8BSq",
+        "workspaceRoot": "/Users/ton/Desktop/projects/web3-explorer",
+        "workspacePath": "packages/uikit/src/components/transfer/SendNotifications.tsx",
+        "id": "ZAQcbisaV7h3JUWX"
+    },
+    {
+        "type": "File",
+        "name": "/Users/ton/Desktop/projects/web3-explorer/packages/locales/src/tonkeeper-web/en.json",
+        "parent_id": "AT6aZtrJ2F5Wl4di",
+        "workspaceRoot": "/Users/ton/Desktop/projects/web3-explorer",
+        "workspacePath": "packages/locales/src/tonkeeper-web/en.json",
+        "id": "oMTc1zOjqrLXIaCh"
+    },
+    {
+        "type": "File",
+        "name": "/Users/ton/Desktop/projects/web3-explorer/packages/uikit/src/styles/defaultTheme.ts",
+        "parent_id": "cXZ0pwWagnyu8BSq",
+        "workspaceRoot": "/Users/ton/Desktop/projects/web3-explorer",
+        "workspacePath": "packages/uikit/src/styles/defaultTheme.ts",
+        "id": "imHwVBRWZqIN4CKL"
+    },
+    {
+        "type": "File",
+        "name": "/Users/ton/Desktop/projects/web3-explorer/apps/desktop/src/index.ts",
+        "parent_id": "cXZ0pwWagnyu8BSq",
+        "workspaceRoot": "/Users/ton/Desktop/projects/web3-explorer",
+        "workspacePath": "apps/desktop/src/index.ts",
+        "id": "y7LYKhxP3NbowcDF"
+    },
+    {
+        "type": "File",
+        "name": "/Users/ton/Desktop/projects/web3-explorer/apps/desktop/src/electron/mainWindow.ts",
+        "parent_id": "cXZ0pwWagnyu8BSq",
+        "workspaceRoot": "/Users/ton/Desktop/projects/web3-explorer",
+        "workspacePath": "apps/desktop/src/electron/mainWindow.ts",
+        "id": "ofHKRxaUqdVNyL5P"
+    },
+    {
+        "type": "File",
+        "name": "/Users/ton/Desktop/projects/web3-explorer/apps/desktop/src/app/App.tsx",
+        "parent_id": "cXZ0pwWagnyu8BSq",
+        "workspaceRoot": "/Users/ton/Desktop/projects/web3-explorer",
+        "workspacePath": "apps/desktop/src/app/App.tsx",
+        "id": "9XSI5OsYtv3myxfA"
+    },
+    {
+        "type": "File",
+        "name": "/Users/ton/Desktop/projects/web3-explorer/packages/web3-app/src/pages/Web3App.tsx",
+        "parent_id": "cXZ0pwWagnyu8BSq",
+        "workspaceRoot": "/Users/ton/Desktop/projects/web3-explorer",
+        "workspacePath": "packages/web3-app/src/pages/Web3App.tsx",
+        "id": "HdUnj2D7ZF0Mkm5K"
+    },
+    {
+        "type": "File",
+        "name": "/Users/ton/Desktop/projects/web3-explorer/packages/uikit-view/src/View/types.ts",
+        "parent_id": "1DBfChzV0TrYSp2v",
+        "workspaceRoot": "/Users/ton/Desktop/projects/web3-explorer",
+        "workspacePath": "packages/uikit-view/src/View/types.ts",
+        "id": "wJbKhf56iY7jmWn1"
+    },
+    {
+        "type": "File",
+        "name": "/Users/ton/Desktop/projects/web3-explorer/packages/uikit-view/src/View/utils.ts",
+        "parent_id": "1DBfChzV0TrYSp2v",
+        "workspaceRoot": "/Users/ton/Desktop/projects/web3-explorer",
+        "workspacePath": "packages/uikit-view/src/View/utils.ts",
+        "id": "eRsBAUTdSXViEQCh"
+    }
+]

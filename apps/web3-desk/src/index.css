@@ -1,0 +1,12 @@
+body{
+    background: #F8F8F8 !important;
+    transition: background-color 0.3s;
+    font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+}
+.MuiToolbar-dense{
+    padding-left: 8px!important;
+    padding-right: 8px!important;
+}
+button{
+    text-transform: none!important;
+}

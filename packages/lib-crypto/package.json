@@ -1,0 +1,29 @@
+{
+	"name": "@web3-explorer/lib-crypto",
+	"version": "1.0.0",
+	"description": "",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"build": "tsc",
+		"start": "tsc -w",
+		"build:pkg": "rm -fr dist && yarn build"
+	},
+	"author": "",
+	"license": "",
+	"dependencies": {
+		"bip39": "^3.0.4",
+		"bn.js": "^4.12.0",
+		"crypto-browserify": "^3.12.0",
+		"crypto-js": "^4.2.0",
+		"elliptic": "6.5.4",
+		"ethereum-cryptography": "0.1.3",
+		"ethereumjs-wallet": "^1.0.2",
+		"js-sha3": "^0.9.3"
+	},
+	"devDependencies": {
+		"@types/bn.js": "5.1.1",
+		"@types/elliptic": "6.4.14",
+		"typescript": "^4.9.4"
+	}
+}
