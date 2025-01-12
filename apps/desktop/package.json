@@ -6,7 +6,7 @@
     "main": ".webpack/main",
     "repository": {
         "type": "git",
-        "url": "https://github.com/TonStockFi/web3-explorer.git"
+        "url": "https://github.com/TonStockFi/web3-desk.git"
     },
     "scripts": {
         "locales": "ts-node ./task/locales",

@@ -4,7 +4,6 @@ import * as React from 'react';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import Typography from '@mui/material/Typography';
 import { View } from '@web3-explorer/uikit-view';
-import { useLocalStorageState } from '@web3-explorer/utils';
 import AppAPI from '../common/AppApi';
 import ServerApi from '../common/ServerApi';
 import { formatNumber, isDesktop } from '../common/utils';
@@ -45,7 +44,7 @@ export default function HomePage({
     serviceInputIsOpen: boolean;
     serviceMediaIsRunning: boolean;
 }) {
-    const [tabId, setTabId] = useLocalStorageState('tabId', 'link');
+    const [tabId, setTabId] = React.useState( 'link');
 
     React.useEffect(() => {
         const loading = document.querySelector('#__loading');

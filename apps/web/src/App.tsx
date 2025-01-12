@@ -1,4 +1,4 @@
-import { MobileDeviceApp } from '@web3-explorer/uikit-desk';
+import { MobileDeviceApp } from '@web3-desk/uikit-desk';
 import { View } from '@web3-explorer/uikit-view';
 import { Buffer } from 'buffer';
 import './App.css';

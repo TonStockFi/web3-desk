@@ -1,5 +1,5 @@
 {
-  "name": "@web3-explorer/uikit-desk",
+  "name": "@web3-desk/uikit-desk",
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -1,12 +1,15 @@
 {
-    "name": "electron-desktop-demo",
+    "name": "web3-desk",
     "version": "1.0.0",
     "repository": {
         "type": "git",
-        "url": "https://github.com/TonStockFi/web3-explorer.git"
+        "url": "https://github.com/TonStockFi/web3-desk.git"
     },
     "scripts": {
-        "sync": "sh sync.sh",
+        "start:desktop": "yarn workspace @web3-desk/desktop start",
+        "make:mac:desktop": "yarn workspace @web3-desk/desktop make:mac",
+        "dev:web": "yarn workspace @web3-desk/web dev",
+        "dev:uikit": "yarn workspace @web3-desk/uikit-desk start",
         "build": "npx turbo build",
         "build:desktop": "npx turbo build:desktop",
         "build:pkg": "npx turbo build:pkg"
