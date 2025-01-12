@@ -5981,9 +5981,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@web3-explorer/web3-desk@workspace:apps/web3-desk":
+"@web3-explorer/web3-desk@workspace:apps/web":
   version: 0.0.0-use.local
-  resolution: "@web3-explorer/web3-desk@workspace:apps/web3-desk"
+  resolution: "@web3-explorer/web3-desk@workspace:apps/web"
   dependencies:
     "@eslint/js": "npm:^9.9.0"
     "@rollup/plugin-inject": "npm:^5.0.5"

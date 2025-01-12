@@ -60,7 +60,7 @@ echo PROJECT_DIR: $PROJECT_DIR
 
 DESKTOP_DIR=$PROJECT_DIR/apps/desktop/public
 SRC_PNG=$PROJECT_DIR/apps/desktop/public/icon@2x.png
-WEB_DIR=$PROJECT_DIR/apps/web3-desk/public
+WEB_DIR=$PROJECT_DIR/apps/web/public
 ANDROID_DIR=$PROJECT_DIR/apps/android/app/src/main/res
 
 
