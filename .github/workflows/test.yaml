@@ -69,7 +69,6 @@ jobs:
                   pip install -r requirements.txt
                   pyinstaller --version
                   pyinstaller -F ws-ctl-server.py --distpath ../desktop/public --clean -n ctl-server
-                  ls -lh dist
                   cd ${{ github.workspace }}
 
             # - name: Decode p8 base64 to a file
