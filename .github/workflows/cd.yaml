@@ -38,7 +38,7 @@ jobs:
         runs-on: ${{ matrix.os }}
         timeout-minutes: 30
         env:
-            VERSION: 1.0.1
+            VERSION: 1.0.2
             PROJECT_NAME: Web3Desk
             # APPLE_API_KEY: ${{ github.workspace }}/AuthKey.p8
             # APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
@@ -73,8 +73,9 @@ jobs:
                   python -m pip install --upgrade pip
                   pip install -r requirements.txt
                   pyinstaller --version
-                  gh release upload ${{ github.ref_name }} "web3-ctl-server.exe"
                   pyinstaller -F ws-ctl-server.py --distpath ../desktop/public --clean -n web3-ctl-server.exe
+                  gh release upload ${{ github.ref_name }} "../desktop/public/web3-ctl-server.exe"
+
                   cd ${{ github.workspace }}
             - name: Build ctl-server on MacOs
               if: runner.os == 'macOS'
@@ -85,6 +86,7 @@ jobs:
                   pyinstaller --version
                   gh release upload ${{ github.ref_name }} "web3-ctl-server"
                   pyinstaller -F ws-ctl-server.py --distpath ../desktop/public --clean -n web3-ctl-server
+                  gh release upload ${{ github.ref_name }} "../desktop/public/web3-ctl-server"
                   cd ${{ github.workspace }}
 
             # - name: Decode p8 base64 to a file
