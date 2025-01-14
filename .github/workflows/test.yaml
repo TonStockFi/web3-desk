@@ -2,7 +2,7 @@ name: Web3Desk Test CD
 on:
     push:
         branches:
-            - main
+            - test
 env:
     node-version: 20.11.1
 
