@@ -11,7 +11,7 @@ permissions:
 
 jobs:
     desktop-build:
-        needs: release
+        name: desktop-build
         strategy:
             matrix:
                 include:
