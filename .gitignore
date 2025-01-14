@@ -3,6 +3,7 @@
 # compiled output
 dist
 *.log
+apps/py-bot/ctl-server
 apps/py-bot/build
 __pycache__
 tmp
