@@ -4,8 +4,8 @@ import contextMenu from 'electron-context-menu';
 import isDev from 'electron-is-dev';
 import screenshot from 'screenshot-desktop';
 
-import { getAuthStatus } from 'node-mac-permissions';
 import path from 'path';
+import { getMacPermission } from './permission';
 import { delay } from './utils';
 import { Action } from './ws-server/action';
 import { getLocalIPAddress, WebSocketServerWrapper } from './ws-server/server';
@@ -38,14 +38,10 @@ setInterval(() => {
             serviceInputIsOpen: true
         };
     } else {
-        const screenRecordingStatus = getAuthStatus('screen');
-        const accessibilityStatus = getAuthStatus('accessibility');
-        authStatus = {
-            screenRecordingStatus,
-            accessibilityStatus,
-            screenRecordingIsAuthed: screenRecordingStatus === 'authorized',
-            serviceInputIsOpen: accessibilityStatus === 'authorized'
-        };
+        authStatus ={
+            ...authStatus,
+            ...getMacPermission()
+        }
     }
     // console.log({ authStatus });
 }, 2000);

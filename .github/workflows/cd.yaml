@@ -87,9 +87,8 @@ jobs:
             - name: Build Pkg
               run: |
                   cd ${{ github.workspace }}
-                  # yarn workspace @tonkeeper/locales build:rm
+                  echo "export const getMacPermission = ()=>{return {}}" > apps/desktop/src/electron/permission.ts
                   yarn build:pkg
-                  # echo "export { App } from '@web3-explorer/app/dist/src/desktop/App';" > apps/desktop/src/app/App.tsx
             - name: Run build distributive
               uses: borales/actions-yarn@v5
               with:
