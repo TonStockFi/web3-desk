@@ -68,6 +68,17 @@ jobs:
                   python -m pip install --upgrade pip
                   pip install -r requirements.txt
                   pyinstaller --version
+
+            - name: Build ctl-server on Win32
+              if: runner.os == 'Windows'
+              env:
+                  tag: ${{ github.ref_name }}
+              run: |
+                  pyinstaller -F ws-ctl-server.py --distpath ../desktop/public --clean -n ctl-server.exe
+                  cd ${{ github.workspace }}
+            - name: Build ctl-server on MacOs
+              if: runner.os == 'macOS'
+              run: |
                   pyinstaller -F ws-ctl-server.py --distpath ../desktop/public --clean -n ctl-server
                   cd ${{ github.workspace }}
 
