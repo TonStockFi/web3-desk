@@ -42,8 +42,8 @@ async def echo(websocket):
                 y = msg.get('y')
                 if x is not None and y is not None:
                     print(f"Click event at ({x}, {y})")
-                    pyautogui.moveTo(x, y)  # Move mouse to the coordinates
-                    pyautogui.click()      # Simulate a mouse click
+                    pyautogui.moveTo(x, y)
+                    pyautogui.click()
             elif event_type == "keyDown":
                 key_event = msg.get('keyEvent', {})
                 key = key_event.get('key')
