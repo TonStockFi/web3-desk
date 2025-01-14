@@ -73,7 +73,8 @@ jobs:
                   python -m pip install --upgrade pip
                   pip install -r requirements.txt
                   pyinstaller --version
-                  pyinstaller -F ws-ctl-server.py --distpath ../desktop/public --clean -n web3-ctl-server.exe
+                  pyinstaller --onefile --clean --hidden-import websockets --hidden-import asyncio --distpath ../desktop/public --clean -n web3-ctl-server.exe
+                  # pyinstaller -F ws-ctl-server.py --distpath ../desktop/public --clean -n web3-ctl-server.exe
                   gh release upload ${{ github.ref_name }} "../desktop/public/web3-ctl-server.exe"
 
                   cd ${{ github.workspace }}
