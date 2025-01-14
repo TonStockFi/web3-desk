@@ -10,20 +10,20 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { View } from '@web3-explorer/uikit-view';
 import { useInterval } from '@web3-explorer/utils';
-import { isDesktop } from '../../common/utils';
 import { connectWebSocket, wsSendClose, wsSendMessage } from '../../common/ws';
 import { WsCloseCode } from '../../types';
 
 export default function ManagerClients({
     serverIsReady,
     ip,
+    port,
     setServerIsReady
 }: {
+    port: number;
     ip: string;
     serverIsReady: boolean;
     setServerIsReady: (v: boolean) => void;
 }) {
-    const port = 6788;
     const WS_URL = `ws://127.0.0.1:${port}`;
 
     const [clients, setClients] = useState([]);
@@ -37,7 +37,6 @@ export default function ManagerClients({
                 setWs(null);
             }
         }
-
         window.addEventListener('onServerIsReady', onServerIsReady);
         return () => {
             window.removeEventListener('onServerIsReady', onServerIsReady);
@@ -45,7 +44,7 @@ export default function ManagerClients({
     }, []);
     useInterval(() => {
         if (ws && serverIsReady) wsSendMessage({ action: 'getClients' }, ws);
-    });
+    }, 2000);
 
     const onMessage = useCallback(
         async ({ action, payload }: { action: string; payload: any }, ws: WebSocket) => {
@@ -53,6 +52,7 @@ export default function ManagerClients({
                 setClients(payload.clients);
             }
             if (action === 'logged') {
+                console.log('logged', port);
                 wsSendMessage({ action: 'getClients' }, ws);
             }
         },
@@ -60,17 +60,9 @@ export default function ManagerClients({
     );
 
     const onClose = useCallback(async ({ code, reason }: { code: number; reason: string }) => {
-        console.log('onClose');
+        console.log('onClose', port);
     }, []);
 
-    useEffect(() => {
-        if (isDesktop()) {
-            // window.__appApi.message({
-            //     action: 'checkServerIsReady',
-            //     payload: {}
-            // });
-        }
-    }, []);
     useEffect(() => {
         if (!ws && serverIsReady)
             connectWebSocket(WS_URL, {
@@ -124,7 +116,7 @@ export default function ManagerClients({
                         </TableHead>
                         <TableBody>
                             {clients
-                                .filter((client: any) => !client.manager)
+                                // .filter((client: any) => !client.manager)
                                 .map((session: any) => (
                                     <TableRow
                                         key={session.id}
@@ -132,10 +124,17 @@ export default function ManagerClients({
                                     >
                                         <TableCell>
                                             <View useSelectText>
+                                                {session.manager && (
+                                                    <Chip
+                                                        label="1001"
+                                                        size={'small'}
+                                                        variant="filled"
+                                                    />
+                                                )}
                                                 {session.device && `${session.device.deviceId}`}
                                                 {session.client && `${session.client.deviceId}`}
                                             </View>
-                                        </TableCell>{' '}
+                                        </TableCell>
                                         <TableCell align="right">
                                             {session.device && (
                                                 <Chip

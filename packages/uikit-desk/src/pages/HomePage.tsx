@@ -12,10 +12,12 @@ import ConfirmationDialog from '../components/ConfirmationDialog';
 import SwerverManager from '../components/SwerverManager';
 import DeviceCard from '../view/Device/DeviceCard';
 import PermissionsCard from '../view/Device/PermissionsCard';
+import PythonPathView from '../view/Device/PythonPathView';
 import ServerCard from '../view/Device/ServerCard';
 import ServiceStartCard from '../view/Device/ServiceStartCard';
 
 export default function HomePage({
+    skipDesktop,
     confirming,
     appAPI,
     onChangeApi,
@@ -30,6 +32,7 @@ export default function HomePage({
     serviceMediaIsRunning,
     onConfirmInitService
 }: {
+    skipDesktop?: boolean;
     screenRecordingIsAuthed: boolean;
     confirming: boolean;
     onChangeApi: any;
@@ -44,15 +47,8 @@ export default function HomePage({
     serviceInputIsOpen: boolean;
     serviceMediaIsRunning: boolean;
 }) {
-    const [tabId, setTabId] = React.useState( 'link');
+    const [tabId, setTabId] = React.useState('link');
 
-    React.useEffect(() => {
-        const loading = document.querySelector('#__loading');
-        //@ts-ignore
-        document.body.style.appRegion = 'unset';
-        //@ts-ignore
-        if (loading) loading.style.display = 'none';
-    }, []);
     const handleInputService = React.useCallback(
         (event: any) => {
             event.stopPropagation();
@@ -84,6 +80,11 @@ export default function HomePage({
                 return;
             }
             if (isDesktop()) {
+                //
+                if (!AppAPI.pythonPath) {
+                    alert('Python路径没有配置,请按帮助文档设置Python路径');
+                    return;
+                }
                 if (!screenRecordingIsAuthed) {
                     alert('启动服务前,请开启屏幕录制');
                     return;
@@ -107,6 +108,24 @@ export default function HomePage({
     // @ts-ignore
     return (
         <View>
+            <View rowVCenter abs right={12} top0>
+                <View
+                    hide={!isDesktop()}
+                    mr12
+                    mt12
+                    buttonOutlined={'隐私与安全'}
+                    onClick={() => {
+                        new AppAPI().open_screen_recording_settings();
+                    }}
+                ></View>
+                <View
+                    mt12
+                    buttonOutlined={'使用文档'}
+                    onClick={() => {
+                        new AppAPI().open_url('https://web3coin.gitbook.io/doc/chan-pin/web3desk');
+                    }}
+                ></View>
+            </View>
             <Box
                 sx={{
                     width: '100vw',
@@ -121,13 +140,13 @@ export default function HomePage({
                     <>
                         <Box
                             sx={{
-                                pt: 2.5,
+                                display: isDesktop() ? 'none' : 'flex',
+                                pt: 4,
                                 height: 85,
                                 fontSize: 32,
                                 color: '#333',
                                 fontWeight: 700,
                                 justifyContent: 'center',
-                                display: 'flex',
                                 alignItems: 'center'
                             }}
                         >
@@ -135,6 +154,7 @@ export default function HomePage({
                         </Box>
                         <Box
                             sx={{
+                                pt: isDesktop() ? 6 : undefined,
                                 m: 1
                             }}
                         >
@@ -163,26 +183,10 @@ export default function HomePage({
                             <View mt12 hide={isDesktop()}>
                                 <ServerCard />
                             </View>
-                            <View center pt12 rowVCenter>
-                                <View
-                                    hide={!isDesktop()}
-                                    mr12
-                                    mt12
-                                    buttonOutlined={'打开MacOs隐私与安全'}
-                                    onClick={() => {
-                                        new AppAPI().open_screen_recording_settings();
-                                    }}
-                                ></View>
-                                <View
-                                    mt12
-                                    buttonOutlined={'使用文档'}
-                                    onClick={() => {
-                                        new AppAPI().open_url(
-                                            'https://web3coin.gitbook.io/doc/chan-pin/web3desk'
-                                        );
-                                    }}
-                                ></View>
+                            <View mt12 hide={!isDesktop()}>
+                                <PythonPathView />
                             </View>
+
                             <ConfirmationDialog
                                 {...{
                                     id: 'stop_service',

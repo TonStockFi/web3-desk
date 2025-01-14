@@ -1,0 +1,76 @@
+name: Verify_p12_p8
+on:
+    push:
+        branches:
+            - verify_p12_p8
+env:
+    node-version: 20.11.1
+
+permissions:
+    contents: write
+
+jobs:
+    release:
+        name: Release pushed tag
+        runs-on: ubuntu-22.04
+        steps:
+            - name: Create release
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  tag: 2.0.6
+              run: |
+                  if gh release view "$tag" --repo="$GITHUB_REPOSITORY" &> /dev/null; then
+                    echo "Release $tag already exists."
+                  else
+                    gh release create "$tag" \
+                        --repo="$GITHUB_REPOSITORY" \
+                        --title="${tag}" \
+                        --draft \
+                        --generate-notes
+                    echo "Release $tag created."
+                  fi
+    desktop-build:
+        name: desktop-build
+        strategy:
+            matrix:
+                include:
+                    - os: macos-13
+                      tag: x64
+                      command: make:x64
+        runs-on: ${{ matrix.os }}
+        timeout-minutes: 30
+        env:
+            APPLE_API_KEY: ${{ github.workspace }}/AuthKey.p8
+            APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+            APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        steps:
+            - name: Decode p8 base64 to a file
+              if: runner.os == 'macOS'
+              env:
+                  CREDENTIALS: ${{ secrets.APPLE_API_KEY_B64 }}
+              run: |
+                  echo $CREDENTIALS | base64 -d > ${{ github.workspace }}/AuthKey.p8
+
+            - name: Verify p8
+              if: runner.os == 'macOS'
+              run: |
+                  # openssl pkey -in ${{ github.workspace }}/AuthKey.p8 -noout -text
+                  xcrun notarytool store-credentials "TestCredentials" --key "${{ github.workspace }}/AuthKey.p8" --key-id "${{ env.APPLE_API_KEY_ID }}" --issuer "${{ env.APPLE_API_ISSUER }}"
+
+            - name: Configure keychain
+              if: runner.os == 'macOS'
+              uses: houlonglong/import-codesign-certs@master
+              with:
+                  p12-file-base64: ${{ secrets.IDENTITY_P12_B64 }}
+                  p12-password: ${{ secrets.IDENTITY_PASSPHRASE }}
+
+            - name: Verify p12
+              if: runner.os == 'macOS'
+              run: |
+                  echo "--------------------- find-identity "
+                  /usr/bin/security find-identity -p codesigning -v
+
+            - name: Clean-up credentials
+              if: always() && runner.os == 'macOS'
+              run: |
+                  rm ${{ github.workspace }}/AuthKey.p8

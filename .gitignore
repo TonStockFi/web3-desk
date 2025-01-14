@@ -2,10 +2,13 @@
 
 # compiled output
 dist
+*.log
+apps/py-bot/build
+__pycache__
 tmp
 apps/desktop/out/
 /out-tsc
-
+*.spec
 # dependencies
 node_modules
 

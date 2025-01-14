@@ -1,6 +1,5 @@
 import { BaseAction } from "../actions/BaseAction";
 import { MacOsAction } from "../actions/MacOsAction";
-import { Win32Action } from "../actions/Win32Action";
 
 
 const isMac = process.platform === 'darwin';
@@ -8,11 +7,20 @@ const isWin = process.platform === 'win32';
 
 export class Action {
     action: BaseAction;
-    constructor() {
-        this.action = isWin ?  new Win32Action(): new MacOsAction()
+    constructor(pythonPath:string) {
+        this.action =  new MacOsAction(pythonPath)
     }
-    async process({ eventType, x, y }: { eventType: 'click' | 'rightClick'; x?: number; y?: number }) {
+    async process({ eventType, x, y,keyEvent }: { keyEvent?:any,eventType: 'click'|'keyDown' | 'rightClick'; x?: number; y?: number }) {
         switch(eventType){
+            case "keyDown":{
+                try {
+                    const result = await this.action.performKeyDownAction(keyEvent);
+                    console.log(result);
+                } catch (error) {
+                    console.error("Error occurred:", error);
+                }
+                break
+            }
             case "click":{
                 try {
                     const result = await this.action.performClickAction(x, y);

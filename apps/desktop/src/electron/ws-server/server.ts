@@ -259,7 +259,7 @@ export class WebSocketServerWrapper {
                 if (typeof message === 'string' && message.startsWith('{')) {
                     
                     const data = JSON.parse(message);
-                    console.log(">> ",data.action)
+                    // console.log(">> ",data.action)
                     if (data.action === 'registerManager') {
                         this.users.forEach((user_, _) => {
                             if (user_.manager) {

@@ -1,13 +1,14 @@
 
 // Base class for actions
 export abstract class BaseAction {
+    pythonPath: string;
     // Constructor for common setup (if any)
-    constructor() {
+    constructor(pythonPath:string) {
+        this.pythonPath = pythonPath
         console.log("BaseAction initialized");
     }
-
-    // Abstract method that must be implemented in subclasses
+    
+    abstract performKeyDownAction(keyEvent?: any): Promise<string>;
     abstract performClickAction(x: number, y: number): Promise<string>;
-    // Abstract method that must be implemented in subclasses
     abstract performRightClickAction(x: number, y: number): Promise<string>;
 }

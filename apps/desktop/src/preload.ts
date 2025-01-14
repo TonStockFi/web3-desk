@@ -12,7 +12,9 @@ contextBridge.exposeInMainWorld('backgroundApi', {
     get_env:()=>ipcRenderer.invoke('message', {action:"get_env",payload:{}}),
     check_service:()=>ipcRenderer.invoke('message', {action:"check_service",payload:{}}),
     check_state:()=>ipcRenderer.invoke('message', {action:"check_state",payload:{}}),
+    run_action:(payloadEvent:any,pythonPath:string)=>ipcRenderer.invoke('message', {action:"run_action",payload:{payloadEvent,pythonPath}}),
     stop_input:()=>ipcRenderer.invoke('message', {action:"stop_input",payload:{}}),
+    get_sources:(types?:string[])=>ipcRenderer.invoke('message', {action:"get_sources",payload:{types}}),
 
     open_url:(url:string)=>ipcRenderer.invoke('message', {action:"open_url",payload:{url}}),
     stop_service:()=>ipcRenderer.invoke('message', {action:"stop_service",payload:{}}),
@@ -21,7 +23,8 @@ contextBridge.exposeInMainWorld('backgroundApi', {
     init_service:(apiUrl: string, password: string, passwordHash: string)=>ipcRenderer.invoke('message', {action:"init_service",payload:{apiUrl,password,passwordHash}}),
     start_action:(action: string)=>ipcRenderer.invoke('message', {action:"start_action",payload:{action}}),
     open_screen_recording_settings:(action: string)=>ipcRenderer.invoke('message', {action:"open_screen_recording_settings",payload:{action}}),
-    
+    get_display_bounds:(display_id: string)=>ipcRenderer.invoke('message', {action:"get_display_bounds",payload:{display_id}}),
+
     platform: () => process.platform,
     arch: () => process.arch,
     node: () => process.versions.node,

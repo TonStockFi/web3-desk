@@ -44,8 +44,9 @@ app.on('before-quit', async e => {
 
 
 
-app.whenReady().then(() => {
-    new WebSocketServerWrapper().start()
+app.whenReady().then(async () => {
+    await WebSocketServerWrapper.startServer()
+    
     MainWindow.openMainWindow();
 });
 

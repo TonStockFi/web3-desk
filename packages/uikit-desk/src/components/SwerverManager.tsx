@@ -1,8 +1,9 @@
 import { View } from '@web3-explorer/uikit-view/dist/View';
 import { useLocalStorageState, useTimeoutLoop } from '@web3-explorer/utils';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import AppAPI from '../common/AppApi';
 import ManagerClients from '../view/Device/ManagerClients';
+import TabViewContainer from './TabViewContainer';
 
 export default function SwerverManager() {
     const [ip, setIp] = useLocalStorageState('ip', '');
@@ -20,15 +21,38 @@ export default function SwerverManager() {
             setServer_is_ready(r);
         });
     });
+    const [listType, setListType] = useState(0);
+
     // console.log(ip, server_is_ready);
     return (
-        <View position={'fixed'} absFull top={44} bottom={55}>
-            <View absFull top={0} pt12 overflowYAuto sx={{ color: '#666' }} px12 borderBox>
-                <ManagerClients
-                    serverIsReady={server_is_ready}
-                    ip={ip}
-                    setServerIsReady={setServer_is_ready}
-                ></ManagerClients>
+        <View position={'fixed'} absFull top={12} bottom={55}>
+            <View absFull top={0} overflowYAuto sx={{ color: '#666' }} px12 borderBox>
+                <TabViewContainer
+                    currentTabIndex={listType}
+                    onChangeTabIndex={(v: number) => {
+                        setListType(v);
+                    }}
+                    tabs={[{ title: '屏幕通道' }, { title: '指令通道' }]}
+                />
+                <View absFull top={58} overflowYAuto>
+                    {listType === 0 && (
+                        <ManagerClients
+                            port={6788}
+                            serverIsReady={server_is_ready}
+                            ip={ip}
+                            setServerIsReady={setServer_is_ready}
+                        ></ManagerClients>
+                    )}
+
+                    {listType === 1 && (
+                        <ManagerClients
+                            port={6789}
+                            serverIsReady={server_is_ready}
+                            ip={ip}
+                            setServerIsReady={setServer_is_ready}
+                        ></ManagerClients>
+                    )}
+                </View>
             </View>
         </View>
     );

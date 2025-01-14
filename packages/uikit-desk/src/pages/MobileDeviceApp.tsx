@@ -1,18 +1,25 @@
 import { Snackbar } from '@mui/material';
 import { md5 } from '@web3-explorer/lib-crypto/dist/utils';
-import { View } from '@web3-explorer/uikit-view/dist/View';
 import { useLocalStorageState, useTimeoutLoop } from '@web3-explorer/utils';
 import * as React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import AppAPI from '../common/AppApi';
 import ServerApi from '../common/ServerApi';
 import { generateDeviceId, generateRandomPassword, isDesktop } from '../common/utils';
+import DesktopPage from './DesktopPage';
 import HomePage from './HomePage';
 
-const KEY_DEVICE_ID = 'device_device_id_1';
+export const KEY_DEVICE_ID = 'device_device_id_1';
 const KEY_PASSWORD = 'device_password';
 
 export default function App() {
+    if (isDesktop()) {
+        return <DesktopPage />;
+    } else {
+        return <AppInner />;
+    }
+}
+export function AppInner() {
     const appAPI = new AppAPI();
     const [state, setState] = React.useState({
         serviceMediaDialogShow: false,
@@ -27,6 +34,14 @@ export default function App() {
     const [serviceInputIsOpen, setServiceInputIsOpen] = useState(false);
     const [serviceMediaIsRunning, setServiceMediaIsRunning] = useState(false);
     const [confirming, setConfirming] = useState(false);
+
+    React.useEffect(() => {
+        const loading = document.querySelector('#__loading');
+        //@ts-ignore
+        document.body.style.appRegion = 'unset';
+        //@ts-ignore
+        if (loading) loading.style.display = 'none';
+    }, []);
     const onConfirmInitService = useCallback(async () => {
         setConfirming(true);
         const password = generateRandomPassword();
@@ -45,46 +60,62 @@ export default function App() {
             setDeviceId(deviceId);
         }
     }, [deviceId]);
+    const handleState = async () => {
+        const res = await new AppAPI().check_state();
+        const {
+            accessibilityStatus,
+            screenRecordingIsAuthed,
+            serviceInputIsOpen,
+            screenRecordingStatus
+        } = res || {};
+        AppAPI.serviceInputIsOpen = !!serviceInputIsOpen;
+
+        AppAPI.screenRecordingStatus = screenRecordingStatus;
+        AppAPI.accessibilityStatus = accessibilityStatus;
+        AppAPI.screenRecordingIsAuthed = screenRecordingIsAuthed;
+    };
+
+    const on_state_changed = async () => {
+        await handleState();
+        const res = await appAPI.check_service();
+        const deviceInfo = JSON.parse(res);
+        // console.log({ deviceInfo });
+        const { mediaIsStart, screenRecordingIsAuthed, isWsConnected, isWsReady, inputIsOpen } =
+            deviceInfo;
+        setScreenRecordingIsAuthed(!!screenRecordingIsAuthed);
+        setServiceInputIsOpen(inputIsOpen);
+        setServiceMediaIsRunning(mediaIsStart);
+        const password = localStorage.getItem(KEY_PASSWORD);
+        const deviceId = localStorage.getItem(KEY_DEVICE_ID);
+        console.log('on_state_changed', res, deviceId);
+
+        if (isWsReady) {
+            setConnected(1);
+        } else {
+            if (!isWsConnected) {
+                setConnected(0);
+            }
+        }
+
+        let passwordHash;
+        if (mediaIsStart) {
+            setConfirming(false);
+            setState({
+                serviceMediaDialogShow: false,
+                serviceInputDialogShow: false,
+                serviceMediaStopDialogShow: false
+            });
+
+            if (password && deviceId) {
+                passwordHash = md5(password);
+            }
+        }
+    };
     useEffect(() => {
         if (!deviceId) {
             return;
         }
 
-        const on_state_changed = async () => {
-            const res = await appAPI.check_service();
-            const deviceInfo = JSON.parse(res);
-            console.log({ deviceInfo });
-            const { mediaIsStart, screenRecordingIsAuthed, isWsConnected, isWsReady, inputIsOpen } =
-                deviceInfo;
-            setScreenRecordingIsAuthed(!!screenRecordingIsAuthed);
-            setServiceInputIsOpen(inputIsOpen);
-            setServiceMediaIsRunning(mediaIsStart);
-            const password = localStorage.getItem(KEY_PASSWORD);
-            const deviceId = localStorage.getItem(KEY_DEVICE_ID);
-            console.log('on_state_changed', res, deviceId);
-
-            if (isWsReady) {
-                setConnected(1);
-            } else {
-                if (!isWsConnected) {
-                    setConnected(0);
-                }
-            }
-
-            let passwordHash;
-            if (mediaIsStart) {
-                setConfirming(false);
-                setState({
-                    serviceMediaDialogShow: false,
-                    serviceInputDialogShow: false,
-                    serviceMediaStopDialogShow: false
-                });
-
-                if (password && deviceId) {
-                    passwordHash = md5(password);
-                }
-            }
-        };
         appAPI.webview_is_ready(ServerApi.getServerApi(), deviceId);
         console.log('on_state_changed ...');
         on_state_changed().catch(console.error);
@@ -154,18 +185,21 @@ export default function App() {
 
     useTimeoutLoop(async () => {
         if (isDesktop()) {
+            handleState();
             const res = await new AppAPI().check_service();
             const { isWsConnected } = JSON.parse(res);
             console.log('check_service', res);
-
             if (isWsConnected) {
                 setConnected(1);
             }
+            if (!state.serviceMediaStopDialogShow) {
+                on_state_changed();
+            }
         }
-    });
+    }, 2000);
     return (
         <>
-            <View
+            {/* <View
                 hide={!isDesktop()}
                 appRegionDrag
                 zIdx={1000}
@@ -173,7 +207,7 @@ export default function App() {
                 top0
                 xx0
                 h={44}
-            ></View>
+            ></View> */}
             <HomePage
                 screenRecordingIsAuthed={screenRecordingIsAuthed}
                 confirming={confirming}
