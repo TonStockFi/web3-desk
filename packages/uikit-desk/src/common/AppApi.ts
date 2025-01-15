@@ -115,4 +115,8 @@ export default class AppAPI {
     run_action(payload:any,pythonPath:string) {
         return this.api.run_action(payload,pythonPath);
     }
+
+    open_ctl_server() {
+        return this.api.open_ctl_server();
+    }
 }

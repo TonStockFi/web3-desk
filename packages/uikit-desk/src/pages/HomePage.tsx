@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 import { View } from '@web3-explorer/uikit-view';
 import AppAPI from '../common/AppApi';
 import ServerApi from '../common/ServerApi';
-import { formatNumber, isDesktop } from '../common/utils';
+import { formatNumber, isDesktop, isMac } from '../common/utils';
 import BottomNavigationView from '../components/BottomNavigationView';
 import ConfirmationDialog from '../components/ConfirmationDialog';
 import SwerverManager from '../components/SwerverManager';
@@ -162,7 +162,7 @@ export default function HomePage({
                             </Box>
                             <View rowVCenter center mt12>
                                 <View
-                                    hide={!isDesktop()}
+                                    hide={!isMac()}
                                     mr12
                                     mt12
                                     buttonOutlined={'隐私与安全'}

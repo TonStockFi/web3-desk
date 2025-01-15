@@ -3,7 +3,8 @@
 # compiled output
 dist
 *.log
-apps/py-bot/ctl-server
+apps/desktop/public/web3-ctl-server
+apps/desktop/public/web3-ctl-server.exe
 apps/py-bot/build
 __pycache__
 tmp

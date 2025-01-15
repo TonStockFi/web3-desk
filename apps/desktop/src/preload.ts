@@ -15,7 +15,9 @@ contextBridge.exposeInMainWorld('backgroundApi', {
     run_action:(payloadEvent:any,pythonPath:string)=>ipcRenderer.invoke('message', {action:"run_action",payload:{payloadEvent,pythonPath}}),
     stop_input:()=>ipcRenderer.invoke('message', {action:"stop_input",payload:{}}),
     get_sources:(types?:string[])=>ipcRenderer.invoke('message', {action:"get_sources",payload:{types}}),
+    open_ctl_server:()=>ipcRenderer.invoke('message', {action:"open_ctl_server",payload:{}}),
 
+    
     open_url:(url:string)=>ipcRenderer.invoke('message', {action:"open_url",payload:{url}}),
     stop_service:()=>ipcRenderer.invoke('message', {action:"stop_service",payload:{}}),
     start_scanner:()=>ipcRenderer.invoke('message', {action:"start_scanner",payload:{}}),

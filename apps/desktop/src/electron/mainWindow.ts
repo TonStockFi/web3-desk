@@ -9,7 +9,7 @@ import { getMacPermission } from './permission';
 import { delay } from './utils';
 import { Action } from './ws-server/action';
 import { getLocalIPAddress, WebSocketServerWrapper } from './ws-server/server';
-
+const publicDir = path.resolve(__dirname, isDev ? '../../' : '../../../', 'public');
 
 contextMenu({
     showInspectElement: isDev ? true : true,
@@ -38,10 +38,10 @@ setInterval(() => {
             serviceInputIsOpen: true
         };
     } else {
-        authStatus ={
+        authStatus = {
             ...authStatus,
             ...getMacPermission()
-        }
+        };
     }
     // console.log({ authStatus });
 }, 2000);
@@ -77,7 +77,7 @@ export abstract class MainWindow {
         );
     }
 
-    static  getState() {
+    static getState() {
         return authStatus;
     }
 
@@ -121,18 +121,8 @@ export abstract class MainWindow {
 
         const url = isDev ? 'http://localhost:5173' : 'https://web3-desk.web3r.site';
         this.mainWindow.loadURL(url);
-        this.mainWindow.webContents.on('dom-ready', async () => {
-            this.mainWindow.show();
-        });
-
-        const dispatchEvent = (action: string, payload: any) => {
-            this.mainWindow.webContents.executeJavaScript(
-                `window.AppCallback(${JSON.stringify({
-                    action,
-                    payload
-                })})`
-            );
-        };
+        open_ctl_server();
+        this.mainWindow.show();
 
         ipcMain.handle('message', async (e: any, message: { action: string; payload: any }) => {
             const { action, payload } = message;
@@ -198,12 +188,12 @@ export abstract class MainWindow {
                     break;
                 }
                 case 'run_action': {
-                    const { payloadEvent,pythonPath } = payload;
-                    console.log({payloadEvent})
-                    if(!pythonPath ||!payloadEvent){
-                        return
+                    const { payloadEvent, pythonPath } = payload;
+                    console.log({ payloadEvent });
+                    if (!pythonPath || !payloadEvent) {
+                        return;
                     }
-                    const { eventType, keyEvent,x, y } = payloadEvent;
+                    const { eventType, keyEvent, x, y } = payloadEvent;
                     const action = new Action(pythonPath);
                     switch (eventType) {
                         case 'click': {
@@ -224,7 +214,6 @@ export abstract class MainWindow {
                         }
 
                         case 'keyDown': {
-
                             action.process({
                                 eventType: 'keyDown',
                                 keyEvent
@@ -234,6 +223,11 @@ export abstract class MainWindow {
                     }
                     break;
                 }
+
+                case 'open_ctl_server': {
+                    return open_ctl_server();
+                }
+
                 case 'get_display_bounds': {
                     let { display_id } = payload;
                     const displays = screen.getAllDisplays();
@@ -275,5 +269,29 @@ export abstract class MainWindow {
         }
 
         return this.mainWindow;
+    }
+}
+
+function open_ctl_server(): any {
+    const file = path.resolve(publicDir, !isWin ? 'web3-ctl-client' : 'web3-ctl-client.exe');
+    try {
+        if (isWin) {
+            exec(`start cmd.exe /k "${file}"`, error => {
+                if (error) {
+                    console.error(`Failed to start the Web3 Control Server: ${error.message}`);
+                }
+            });
+        } else {
+            exec(`open -a Terminal "${file}";`, error => {
+                if (error) {
+                    console.error(`Failed to start the Web3 Control Server: ${error.message}`);
+                }
+            });
+        }
+        console.log(`Web3 Control Server started: ${file}`);
+        return true;
+    } catch (error) {
+        console.error(`Failed to start the Web3 Control Server: ${error.message}`);
+        return false;
     }
 }

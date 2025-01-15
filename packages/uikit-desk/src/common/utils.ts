@@ -69,3 +69,12 @@ export function isDesktop(){
     //@ts-ignore
     return !!window.backgroundApi
 }
+
+
+export function isMac() {
+    if(!isDesktop()){
+        return false;
+    }
+    const userAgent = navigator.userAgent.toLowerCase();
+    return userAgent.includes("mac");
+}
