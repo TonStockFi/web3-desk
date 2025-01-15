@@ -30,9 +30,9 @@ export default function SwerverManager() {
                 <TabViewContainer
                     currentTabIndex={listType}
                     onChangeTabIndex={(v: number) => {
-                        setListType(v);
+                        // setListType(v);
                     }}
-                    tabs={[{ title: '屏幕通道' }, { title: '指令通道' }]}
+                    tabs={[{ title: '屏幕通道' }]}
                 />
                 <View absFull top={58} overflowYAuto>
                     {listType === 0 && (
@@ -43,7 +43,7 @@ export default function SwerverManager() {
                             setServerIsReady={setServer_is_ready}
                         ></ManagerClients>
                     )}
-
+                    {/* 
                     {listType === 1 && (
                         <ManagerClients
                             port={6789}
@@ -51,7 +51,7 @@ export default function SwerverManager() {
                             ip={ip}
                             setServerIsReady={setServer_is_ready}
                         ></ManagerClients>
-                    )}
+                    )} */}
                 </View>
             </View>
         </View>

@@ -264,7 +264,8 @@ export async function initClients(
     const urls = apiUrl.split('\n');
     console.log('initClients', { urls, deviceId, password, passwordHash });
     if (!wsPyCtlClient) {
-        wsPyCtlClient = new WebSocketCtlClient('ws://127.0.0.1:8888');
+        new AppAPI().open_ctl_server();
+        wsPyCtlClient = new WebSocketCtlClient('ws://127.0.0.1:6790');
     }
     try {
         for (let index = 0; index < urls.length; index++) {

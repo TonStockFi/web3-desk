@@ -25,7 +25,7 @@ export default function Permissions({
 }) {
     if (isDesktop()) {
         return (
-            <View relative>
+            <View relative column>
                 <View absFull zIdx={1} top={serviceMediaIsRunning ? 80 : 22}></View>
                 <FormControl component="fieldset" variant="standard">
                     <FormLabel component="legend">权限</FormLabel>

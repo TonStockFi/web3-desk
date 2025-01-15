@@ -121,12 +121,9 @@ export abstract class MainWindow {
 
         const url = isDev ? 'http://localhost:5173' : 'https://web3-desk.web3r.site';
         this.mainWindow.loadURL(url);
-        open_ctl_server();
         this.mainWindow.show();
-
         ipcMain.handle('message', async (e: any, message: { action: string; payload: any }) => {
             const { action, payload } = message;
-
             switch (action) {
                 case 'open_url': {
                     let { url } = payload;
@@ -273,7 +270,8 @@ export abstract class MainWindow {
 }
 
 function open_ctl_server(): any {
-    const file = path.resolve(publicDir, !isWin ? 'web3-ctl-client' : 'web3-ctl-client.exe');
+    let file = path.resolve(publicDir, !isWin ? 'web3-ctl-server' : 'web3-ctl-server.exe');
+
     try {
         if (isWin) {
             exec(`start cmd.exe /k "${file}"`, error => {
@@ -282,11 +280,20 @@ function open_ctl_server(): any {
                 }
             });
         } else {
-            exec(`open -a Terminal "${file}";`, error => {
-                if (error) {
-                    console.error(`Failed to start the Web3 Control Server: ${error.message}`);
-                }
-            });
+            if (isMac && isDev) {
+                // Use `open -a Terminal` to open a new Terminal window and execute the command
+                exec(`sh /Users/ton/Desktop/projects/web3-desk/apps/py-bot/start.sh`, error => {
+                    if (error) {
+                        console.error(`Failed to start the Web3 Control Server: ${error.message}`);
+                    }
+                });
+            } else {
+                exec(`open -a Terminal "${file}";`, error => {
+                    if (error) {
+                        console.error(`Failed to start the Web3 Control Server: ${error.message}`);
+                    }
+                });
+            }
         }
         console.log(`Web3 Control Server started: ${file}`);
         return true;

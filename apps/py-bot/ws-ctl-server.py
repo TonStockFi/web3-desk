@@ -64,14 +64,13 @@ async def main(PORT):
     async with serve(echo, "localhost", PORT) as server:
         await server.serve_forever()
 
-PORT = 8888
+PORT = 6790
 
 if len(sys.argv) > 2:
     try:
         PORT = int(sys.argv[2])
     except ValueError:
         log("Invalid port number. Using default port "+ str(PORT))
-print(1)
+        
 if __name__ == "__main__":
-    print(2)
     asyncio.run(main(PORT))

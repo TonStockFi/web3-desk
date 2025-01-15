@@ -53,6 +53,7 @@ export interface User {
     device?: Device;
     client?: Device;
     manager?: {};
+    ctl?: {};
 }
 
 export const isWs_OPEN = (ws?: WebSocket) => {
@@ -260,6 +261,24 @@ export class WebSocketServerWrapper {
                     
                     const data = JSON.parse(message);
                     // console.log(">> ",data.action)
+                    if (data.action === 'registerCtl') {
+                        this.users.forEach((user_, _) => {
+                            if (user_.ctl) {
+                                closeWs(user_.ws);
+                            }
+                        });
+                        this.users.set(userId, {
+                            ...this.users.get(userId),
+                            manager: {}
+                        });
+                        sendMessage(
+                            {
+                                action: 'logged'
+                            },
+                            ws
+                        );
+                        return;
+                    }
                     if (data.action === 'registerManager') {
                         this.users.forEach((user_, _) => {
                             if (user_.manager) {
@@ -276,7 +295,6 @@ export class WebSocketServerWrapper {
                             },
                             ws
                         );
-
                         return;
                     }
                     if (data.action === 'registerDevice') {
