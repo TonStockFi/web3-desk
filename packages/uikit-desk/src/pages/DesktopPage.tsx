@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 
 import { default as AppAPI } from '../common/AppApi';
 
+import { isMac } from '../common/utils';
 import { WsCloseCode } from '../types';
 import { AppInner, KEY_DEVICE_ID } from './MobileDeviceApp';
 
@@ -64,6 +65,7 @@ function getDeviceInfo() {
     const dpi = 96 * devicePixelRatio;
     //@ts-ignore
     const platform = window.backgroundApi.platform();
+
     //@ts-ignore
     const arch = window.backgroundApi.arch();
     return {
@@ -118,7 +120,7 @@ class WebSocketClient {
                     payload: {
                         deviceId: this.deviceId,
                         password: this.passwordHash,
-                        platform: 'macOS'
+                        platform: isMac() ? 'macOS' : 'win'
                     }
                 })
             );

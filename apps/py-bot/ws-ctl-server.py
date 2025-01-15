@@ -3,6 +3,8 @@ import time
 import sys
 import json
 import logging
+import time
+
 
 
 import asyncio
@@ -37,7 +39,22 @@ async def echo(websocket):
         try:
             msg = json.loads(message)
             event_type = msg.get('eventType')
-            if event_type == "click":
+            
+
+            if event_type == "dragMove":
+                x = msg.get('x')
+                y = msg.get('y')
+                if x is not None and y is not None:
+                    print(f"dragMove event at ({x}, {y})")
+                    # pyautogui.moveTo(x, y)
+            elif event_type == "rightClick":
+                x = msg.get('x')
+                y = msg.get('y')
+                if x is not None and y is not None:
+                    print(f"RightClick event at ({x}, {y})")
+                    pyautogui.moveTo(x, y)
+                    pyautogui.rightClick(x,y)
+            elif event_type == "click":
                 x = msg.get('x')
                 y = msg.get('y')
                 if x is not None and y is not None:
@@ -52,6 +69,18 @@ async def echo(websocket):
                     print(f"KeyDown event for key: {key}")
                     pyautogui.keyDown("ww")  # Simulate a key press
 
+            elif event_type == "pyautogui":
+                pyAutoGuisScript = msg.get('pyAutoGuisScript')
+                if pyAutoGuisScript:
+                    try:
+                        print(f"Executing pyautogui script:\n{pyAutoGuisScript}")
+                        # Evaluate the script safely (avoid using `exec` unless you're certain of the input's safety)
+                        exec(pyAutoGuisScript)
+                    except Exception as e:
+                        log(f"Error executing pyautogui script: {e}", level=logging.ERROR)
+                else:
+                    print("No script provided for pyautogui event.")
+                
             else:
                 print(f"Unknown eventType: {event_type}")
         except e:
