@@ -16,8 +16,6 @@ contextBridge.exposeInMainWorld('backgroundApi', {
     stop_input:()=>ipcRenderer.invoke('message', {action:"stop_input",payload:{}}),
     get_sources:(types?:string[])=>ipcRenderer.invoke('message', {action:"get_sources",payload:{types}}),
     open_ctl_server:()=>ipcRenderer.invoke('message', {action:"open_ctl_server",payload:{}}),
-
-    
     open_url:(url:string)=>ipcRenderer.invoke('message', {action:"open_url",payload:{url}}),
     stop_service:()=>ipcRenderer.invoke('message', {action:"stop_service",payload:{}}),
     start_scanner:()=>ipcRenderer.invoke('message', {action:"start_scanner",payload:{}}),
@@ -26,6 +24,7 @@ contextBridge.exposeInMainWorld('backgroundApi', {
     start_action:(action: string)=>ipcRenderer.invoke('message', {action:"start_action",payload:{action}}),
     open_screen_recording_settings:(action: string)=>ipcRenderer.invoke('message', {action:"open_screen_recording_settings",payload:{action}}),
     get_display_bounds:(display_id: string)=>ipcRenderer.invoke('message', {action:"get_display_bounds",payload:{display_id}}),
+    on_stream:(data: any)=>ipcRenderer.invoke('message', {action:"on_stream",payload:{data}}),
 
     platform: () => process.platform,
     arch: () => process.arch,

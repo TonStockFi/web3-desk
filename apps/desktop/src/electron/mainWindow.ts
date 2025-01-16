@@ -1,7 +1,8 @@
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { app, BrowserWindow, desktopCapturer, ipcMain, screen, shell, Tray } from 'electron';
 import contextMenu from 'electron-context-menu';
 import isDev from 'electron-is-dev';
+
 import screenshot from 'screenshot-desktop';
 
 import path from 'path';
@@ -18,6 +19,7 @@ contextMenu({
     showLookUpSelection: false,
     showSelectAll: false
 });
+
 
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
@@ -118,10 +120,12 @@ export abstract class MainWindow {
                 preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY
             }
         });
+        
 
         const url = isDev ? 'http://localhost:5173' : 'https://web3-desk.web3r.site';
         this.mainWindow.loadURL(url);
         this.mainWindow.show();
+        
         ipcMain.handle('message', async (e: any, message: { action: string; payload: any }) => {
             const { action, payload } = message;
             switch (action) {
@@ -271,29 +275,27 @@ export abstract class MainWindow {
 
 function open_ctl_server(): any {
     let file = path.resolve(publicDir, !isWin ? 'web3-ctl-server' : 'web3-ctl-server.exe');
-
     try {
+        let process;
         if (isWin) {
-            exec(`start cmd.exe /k "${file}"`, error => {
-                if (error) {
-                    console.error(`Failed to start the Web3 Control Server: ${error.message}`);
-                }
-            });
+            process = spawn(file, [], { detached: true, stdio: "ignore" });
         } else {
-            if (isMac && isDev) {
-                // Use `open -a Terminal` to open a new Terminal window and execute the command
-                exec(`sh /Users/ton/Desktop/projects/web3-desk/apps/py-bot/start.sh`, error => {
-                    if (error) {
-                        console.error(`Failed to start the Web3 Control Server: ${error.message}`);
-                    }
-                });
-            } else {
-                exec(`open -a Terminal "${file}";`, error => {
-                    if (error) {
-                        console.error(`Failed to start the Web3 Control Server: ${error.message}`);
-                    }
-                });
-            }
+            // if (isMac && isDev) {
+            //     // Use `open -a Terminal` to open a new Terminal window and execute the command
+            //     exec(`sh /Users/ton/Desktop/projects/web3-desk/apps/py-bot/start.sh`, error => {
+            //         if (error) {
+            //             console.error(`Failed to start the Web3 Control Server: ${error.message}`);
+            //         }
+            //     });
+            // }else{
+            //     process = spawn(file, [], { detached: true, stdio: "ignore" });
+
+            // }
+            process = spawn(file, [], { detached: true, stdio: "ignore" });
+
+        }
+        if(process){
+            process.unref(); // 让进程独立运行，不受 Electron 退出影响
         }
         console.log(`Web3 Control Server started: ${file}`);
         return true;

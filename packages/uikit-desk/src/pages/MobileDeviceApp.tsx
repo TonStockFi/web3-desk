@@ -87,7 +87,7 @@ export function AppInner() {
         setServiceMediaIsRunning(mediaIsStart);
         const password = localStorage.getItem(KEY_PASSWORD);
         const deviceId = localStorage.getItem(KEY_DEVICE_ID);
-        console.log('on_state_changed', res, deviceId);
+        // console.log('on_state_changed', res, deviceId);
 
         if (isWsReady) {
             setConnected(1);
@@ -188,7 +188,7 @@ export function AppInner() {
             handleState();
             const res = await new AppAPI().check_service();
             const { isWsConnected } = JSON.parse(res);
-            console.log('check_service', res);
+            // console.log('check_service', res);
             if (isWsConnected) {
                 setConnected(1);
             }

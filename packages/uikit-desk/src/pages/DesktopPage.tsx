@@ -1,4 +1,3 @@
-import { aesGcmEncryptBuffer } from '@web3-explorer/lib-crypto/dist/AESService';
 import { View } from '@web3-explorer/uikit-view/dist/View';
 import { useTimeoutLoop } from '@web3-explorer/utils';
 import { useEffect } from 'react';
@@ -92,12 +91,15 @@ class WebSocketClient {
     password: string;
     passwordHash: string;
     url: string;
+    peerConnection: RTCPeerConnection;
 
     constructor(url: string, deviceId: String, password: string, passwordHash: string) {
         this.url = url;
         this.deviceId = deviceId;
         this.password = password;
         this.passwordHash = passwordHash;
+        this.peerConnection = new RTCPeerConnection();
+
         this.init();
     }
     getPasswordHash() {
@@ -108,8 +110,66 @@ class WebSocketClient {
         return this.password;
     }
 
+    async handleScreen() {
+        const sources = await new AppAPI().get_sources(['window', 'screen']);
+        const screenSource = sources[0];
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: {
+                ...({
+                    mandatory: {
+                        minWidth: 1920,
+                        minHeight: 1080,
+                        minFrameRate: 30,
+                        chromeMediaSource: 'desktop',
+                        chromeMediaSourceId: screenSource.id
+                    }
+                } as any)
+            }
+        });
+
+        const videoElement = document.getElementById('video') as HTMLVideoElement;
+
+        stream.getTracks().forEach(track => {
+            const sender = this.peerConnection.addTrack(track, stream);
+
+            // 设置码率
+            const params = sender.getParameters();
+            if (!params.encodings) params.encodings = [{}];
+
+            params.encodings[0].maxBitrate = 5_000_000; // 5Mbps
+            params.encodings[0].maxFramerate = 30;
+            sender.setParameters(params);
+        });
+        // 处理 ICE 连接
+        this.peerConnection.onicecandidate = event => {
+            if (event.candidate) {
+                wsClient!.sendJsonMessage({
+                    action: 'deviceMsg',
+                    payload: {
+                        candidate: event.candidate
+                    }
+                });
+            }
+        };
+        // 创建 SDP offer 并发送
+        const offer = await this.peerConnection.createOffer();
+        await this.peerConnection.setLocalDescription(offer);
+
+        wsClient!.sendJsonMessage({
+            action: 'deviceMsg',
+            payload: {
+                offer
+            }
+        });
+
+        videoElement!.srcObject! = stream;
+        // await new Promise(resolve => (videoElement!.onloadedmetadata = resolve));
+        // videoElement!.play();
+    }
     async init() {
         const ws = new WebSocket(this.url);
+        ws.binaryType = 'arraybuffer';
         this.socket = ws;
 
         ws.onopen = () => {
@@ -130,7 +190,7 @@ class WebSocketClient {
             console.log('Message received:', event.data);
             const { action, payload } = JSON.parse(event.data as string);
             if (action === 'clientMsg') {
-                const { eventType } = payload;
+                const { eventType, answer, candidate } = payload;
 
                 switch (eventType) {
                     case 'deviceInfo': {
@@ -142,6 +202,19 @@ class WebSocketClient {
                                 deviceInfo
                             }
                         });
+                        this.handleScreen();
+                        return;
+                    }
+
+                    case 'answer': {
+                        await this.peerConnection.setRemoteDescription(
+                            new RTCSessionDescription(answer)
+                        );
+                        return;
+                    }
+
+                    case 'candidate': {
+                        await this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
                         return;
                     }
                     case 'stopPushingImage': {
@@ -330,112 +403,37 @@ export async function initClients(
 export function sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
-let videoElement: null | HTMLVideoElement = null;
-let canvas: null | HTMLCanvasElement = null;
-function isVideoPlaying(video: HTMLVideoElement): boolean {
-    return !video.paused && video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
-}
 
 export default function DesktopPage() {
-    const getScreen = async () => {
-        const sources = await new AppAPI().get_sources(['window', 'screen']);
-        const screenSource = sources[0];
-        const stream = await navigator.mediaDevices.getUserMedia({
-            audio: false,
-            video: {
-                ...({
-                    mandatory: {
-                        chromeMediaSource: 'desktop',
-                        chromeMediaSourceId: screenSource.id
-                    }
-                } as any)
-            }
-        });
-
-        videoElement = document.getElementById('canvas_screen') as HTMLVideoElement;
-        if (!videoElement) {
-            console.error('Video element not found!');
-            return;
-        }
-        videoElement.srcObject = stream;
-        videoElement.play();
-    };
     useTimeoutLoop(async () => {
-        if (
-            videoElement &&
-            isVideoPlaying(videoElement) &&
-            wsClient &&
-            wsClient &&
-            wsClient.isOpen() &&
-            client_is_ready &&
-            wsClient.getPassword() &&
-            startPushingImage
-        ) {
-            if (!canvas) {
-                canvas = document.getElementById('canvas_screen_copy') as HTMLCanvasElement;
-                if (!canvas) {
-                    return;
-                }
-            }
-            const context = canvas.getContext('2d');
-            canvas.width = videoElement.videoWidth;
-            canvas.height = videoElement.videoHeight;
+        const getData = () => {
+            return new Promise(resolve => {
+                // Wait for the video to be playing, then draw the video frame to the canvas
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                const videoElement = document.getElementById('video') as HTMLVideoElement;
 
-            if (!context) {
-                return;
-            }
-            context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                // Set canvas dimensions to match the video frame
+                canvas.width = videoElement.videoWidth;
+                canvas.height = videoElement.videoHeight;
 
-            const blob = await new Promise<Blob | null>(resolve =>
-                canvas!.toBlob(
-                    blob => resolve(blob),
+                // Draw the current frame from the video to the canvas
+                context?.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                // Convert the canvas to an image (Base64 encoded PNG)
+                canvas.toBlob(
+                    async blob => {
+                        resolve(await blob?.arrayBuffer());
+                    },
                     'image/jpeg',
-                    0.95 // Quality: 0.8
-                )
-            );
-
-            if (!blob) {
-                console.error('Failed to create Blob from canvas.');
-                return;
-            }
-            const buffer = await blob.arrayBuffer();
-            const encryptData = await aesGcmEncryptBuffer(
-                Buffer.from(buffer),
-                wsClient.getPassword()
-            );
-
-            const dataUri = `data:jpeg;base64_a${wsClient
-                .getPasswordHash()
-                .substring(0, 4)},${encryptData}`;
-            wsClient.sendMessage(
-                JSON.stringify({
-                    action: 'deviceMsg',
-                    payload: {
-                        screenImage: {
-                            data: dataUri,
-                            ts: +new Date()
-                        }
-                    }
-                })
-            );
-            // wsClient.sendMessage(
-            //     JSON.stringify({
-            //         action: 'close',
-            //         payload: {
-            //             code: WsCloseCode.WS_CLOSE_STOP_RECONNECT,
-            //             reason: 'WS_CLOSE_STOP_RECONNECT'
-            //         }
-            //     })
-            // );
-
-            // const frameDataURL = canvas.toDataURL('image/jpeg', 0.8); // Quality: 0.8
-            // // Display the frame data as an image for debugging
-            // const imgElement = document.getElementById('screen_img') as HTMLImageElement;
-            // if (imgElement) {
-            //     imgElement.src = frameDataURL;
-            // }
+                    0.9
+                );
+            });
+        };
+        if (wsClient && startPushingImage) {
+            const res = await getData();
+            wsClient?.sendMessage(res);
         }
-    }, 100);
+    }, 200);
 
     useEffect(() => {
         async function init_service(e: any) {
@@ -447,7 +445,6 @@ export default function DesktopPage() {
                 AppAPI.isWsConnected = true;
                 AppAPI.isWsReady = true;
                 AppAPI.client_is_ready = true;
-                await getScreen();
                 // @ts-ignore
                 window['AppCallback']({
                     action: 'on_state_changed'
@@ -466,6 +463,11 @@ export default function DesktopPage() {
                         }
                     })
                 );
+                const videoElement = document.getElementById('video') as HTMLVideoElement;
+
+                if (videoElement) {
+                    videoElement!.play();
+                }
 
                 console.log('screen closing');
                 await waitForResult(() => {
@@ -477,9 +479,9 @@ export default function DesktopPage() {
             AppAPI.isWsConnected = false;
             AppAPI.isWsReady = false;
             AppAPI.client_is_ready = false;
-            if (videoElement) {
-                videoElement.pause();
-            }
+            // if (videoElement) {
+            //     videoElement.pause();
+            // }
             // @ts-ignore
             window['AppCallback']({
                 action: 'on_state_changed'
@@ -495,18 +497,17 @@ export default function DesktopPage() {
 
     return (
         <View absFull position={'fixed'}>
-            <View>
-                <AppInner></AppInner>
-            </View>
             <View column displayNone>
-                <View wh={800}>
-                    <img style={{ maxWidth: '100%' }} id="screen_img"></img>
+                <View wh={400}>
                     <video
-                        style={{ maxWidth: '100%', display: 'block' }}
-                        id="canvas_screen"
+                        style={{ border: '1px solid black', maxWidth: '100%', display: 'block' }}
+                        id="video"
                     ></video>
-                    <canvas style={{ display: 'none' }} id="canvas_screen_copy"></canvas>
+                    <img src="" id={'img'} alt="" />
                 </View>
+            </View>
+            <View>
+                <AppInner />
             </View>
         </View>
     );

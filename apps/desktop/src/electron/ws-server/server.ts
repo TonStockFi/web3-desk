@@ -1,10 +1,10 @@
 //@ts-nocheck
 import os from 'os';
-import WebSocket, { WebSocketServer } from 'ws';
 
+import { v4 as uuidv4 } from 'uuid';
+import WebSocket, { WebSocketServer } from 'ws';
 export function getLocalIPAddress() {
     const networkInterfaces = os.networkInterfaces();
-
     // Loop through all network interfaces to find the Ethernet (or active network)
     for (const interfaceName of Object.keys(networkInterfaces)) {
         const addresses = networkInterfaces[interfaceName];
@@ -75,6 +75,15 @@ function closeWs(ws: WebSocket, code?: number, reason?: string) {
     }
 }
 
+
+const sendBufferMessage = (message: any, ws: WebSocket) => {
+    if (isWs_OPEN(ws)) {
+        ws.send(message);
+    } else {
+        console.error('ws is not open');
+    }
+};
+
 const sendMessage = (message: any, ws: WebSocket) => {
     if (isWs_OPEN(ws)) {
         if (typeof message === 'string') {
@@ -125,38 +134,38 @@ function getMetaData(userAgent?: string, request?: any) {
     };
 }
 
-let _serverIsReady = false
-let _server:WebSocketServerWrapper|null = null
-let _serverCtl:WebSocketServerWrapper|null = null
+let _serverIsReady = false;
+let _server: WebSocketServerWrapper | null = null;
+let _serverCtl: WebSocketServerWrapper | null = null;
 // let _serverFile:WebSocketServerWrapper|null = null
 
 export class WebSocketServerWrapper {
     private users: Map<string, User>;
     private wss: WebSocketServer | undefined;
     private port: number;
-    
+
     constructor(port: number = 6788) {
         this.port = port;
         this.users = new Map();
     }
-    static async startServer(port? :number){
-        if(!port){
-            port = 6788
+    static async startServer(port?: number) {
+        if (!port) {
+            port = 6788;
         }
-        if(!_server){
+        if (!_server) {
             _server = new WebSocketServerWrapper(port);
             _serverCtl = new WebSocketServerWrapper(port + 1);
             // _serverFile = new WebSocketServerWrapper(port + 2);
             await Promise.all([
                 _server.start(),
-                _serverCtl.start(),
+                _serverCtl.start()
                 // _serverFile.start(),
             ]);
         }
-        return  true;
+        return true;
     }
 
-    static async stopServer(){
+    static async stopServer() {
         const stops = [];
 
         if (_server) {
@@ -170,14 +179,13 @@ export class WebSocketServerWrapper {
         // }
 
         await Promise.all(stops);
-        _server = null
+        _server = null;
         // _serverFile = null
-        _serverCtl = null
-         return true
-        
+        _serverCtl = null;
+        return true;
     }
-    static serverIsReady(){
-        return _serverIsReady
+    static serverIsReady() {
+        return _serverIsReady;
     }
     public start(): Promise<boolean> {
         return new Promise((resolve, reject) => {
@@ -235,7 +243,7 @@ export class WebSocketServerWrapper {
     }
 
     async handleWebSocketSession(ws: WebSocket, metadata?: any) {
-        const userId = crypto.randomUUID();
+        const userId = uuidv4();
         console.log('connected', userId);
         this.users.set(userId, {
             id: userId,
@@ -246,6 +254,7 @@ export class WebSocketServerWrapper {
             client: null
         });
 
+        
         ws.addEventListener('message', async msg => {
             try {
                 this.users.forEach((user_, _) => {
@@ -259,7 +268,6 @@ export class WebSocketServerWrapper {
                 });
                 const message = msg.data;
                 if (typeof message === 'string' && message.startsWith('{')) {
-                    
                     const data = JSON.parse(message);
                     // console.log(">> ",data.action)
                     if (data.action === 'registerCtl') {
@@ -402,22 +410,36 @@ export class WebSocketServerWrapper {
                             if (user_.client && user_.client.deviceId === user.device.deviceId) {
                                 try {
                                     sendMessage(message, user_.ws);
-                                    count = 1
+                                    count = 1;
                                 } catch (e) {
                                     console.error(e, user_.ws);
                                 }
                             }
                         });
+                        
                         // console.log({count})
                         return;
                     }
+                } else if(typeof message !== 'string' ) {
+                    const user = this.users.get(userId);
+                    this.users.forEach((user_, _) => {
+                        if (user_.client && user_.client.deviceId === user.device.deviceId) {
+                            try {
+                                sendBufferMessage(message, user_.ws);
+                            } catch (e) {
+                                console.error(e, user_.ws);
+                            }
+                        }
+                    });
+                
                 }
             } catch (err: any) {
-                console.error("error",err);
+                console.error('error', err);
             }
         });
 
         let closeOrErrorHandler = () => {
+            console.log('Client disconnected');
             const user = this.users.get(userId);
             console.log('closeOrErrorHandler');
             if (user.device) {

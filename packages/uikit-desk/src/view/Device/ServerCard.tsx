@@ -18,7 +18,7 @@ export default function ServerCard() {
                         maxRows={1}
                         multiline
                         sx={{ width: 300, mt: 2 }}
-                        placeholder="请输入地址,以 ws:// 或者 wss://ws.web3r.site 开头"
+                        placeholder="请输入地址,以 ws:// 或者 wss://push.web3r.site 开头"
                         onChange={e => {
                             ServerApi.setServerApi(e.target.value);
                             setApi(e.target.value);
