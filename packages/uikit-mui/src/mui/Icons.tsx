@@ -1,6 +1,7 @@
 import { default as AccountBalanceIcon } from '@mui/icons-material/AccountBalance';
 import AccountBalanceOutlined from '@mui/icons-material/AccountBalanceOutlined';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import AccountBox from '@mui/icons-material/AccountBox';
 import AddIcon from '@mui/icons-material/Add';
 import AdsClick from '@mui/icons-material/AdsClick';
 import Android from '@mui/icons-material/Android';
@@ -24,6 +25,7 @@ import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DevicesIcon from '@mui/icons-material/Devices';
 import Diamond from '@mui/icons-material/Diamond';
+import Diversity1 from '@mui/icons-material/Diversity1';
 import EditIcon from '@mui/icons-material/Edit';
 import EmojiEvents from '@mui/icons-material/EmojiEvents';
 import EmojiEventsOutlined from '@mui/icons-material/EmojiEventsOutlined';
@@ -103,6 +105,7 @@ import { GiClick } from 'react-icons/gi';
 
 export type IconList =
     | 'Folder'
+    | 'Diversity1'
     | 'AiOutlineUserSwitch'
     | 'BubbleChart'
     | 'GiClick'
@@ -158,6 +161,7 @@ export type IconList =
     | 'EmojiEventsOutlined'
     | 'ToggleOn'
     | 'PhotoLibrary'
+    | 'AccountBox'
     | 'ToggleOff'
     | 'Send'
     | 'Comment'
@@ -213,9 +217,11 @@ export const IconsMap: Record<string, React.ElementType> = {
     Comment,
     PhotoLibrary,
     Redeem,
+    Diversity1,
     AiOutlineUserSwitch,
     AutoFixHigh,
     EmojiEventsOutlined,
+    AccountBox,
     GroupAdd,
     OpenInFull,
     EmojiEvents,
