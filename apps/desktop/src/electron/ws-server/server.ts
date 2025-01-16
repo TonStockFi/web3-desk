@@ -1,7 +1,7 @@
 //@ts-nocheck
 import os from 'os';
+import { v4 as uuidv4 } from 'uuid';
 import WebSocket, { WebSocketServer } from 'ws';
-import { v4: uuidv4 } from 'uuid';
 
 const {  } = require('uuid');
 
