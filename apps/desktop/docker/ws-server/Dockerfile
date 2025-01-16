@@ -1,6 +1,7 @@
 # 使用官方 Node.js 运行时作为基础镜像
 FROM node:18
 
+EXPOSE 6788
 # 设置工作目录
 WORKDIR /app
 
@@ -24,4 +25,5 @@ RUN npx tsc
 CMD ["node", "main.js"]
 
 # docker build -t ctl-server .
-# docker run -d --name ctl-server -p 6788:6788 ctl-server
+# docker run --network web3r_network -d --name ctl-server -p 6788:6788 ctl-server
+# docker run --network web3r_network --name ctl-server -p 6788:6788 ctl-server
