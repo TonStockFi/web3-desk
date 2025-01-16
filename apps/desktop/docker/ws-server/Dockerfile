@@ -14,8 +14,8 @@ RUN npm install typescript ts-node ws uuid
 # cp ../../src/electron/ws-server/main.ts ./
 # cp ../../src/electron/ws-server/server.ts ./
 # 复制当前目录所有文件到容器内
-COPY ./main.ts ./
-COPY ./server.ts ./
+COPY ./main.ts .
+COPY ./server.ts .
 
 # 运行 TypeScript 编译
 RUN npx tsc --init
