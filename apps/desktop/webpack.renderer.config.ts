@@ -22,8 +22,6 @@ export const rendererConfig: Configuration = {
         fallback: {
             vm: false,
             buffer: require.resolve('buffer/'),
-            stream: require.resolve('stream-browserify'),
-            crypto: require.resolve('crypto-browserify')
         }
     }
 };

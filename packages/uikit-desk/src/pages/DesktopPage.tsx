@@ -352,13 +352,28 @@ export default function DesktopPage() {
             }
         });
 
-        videoElement = document.getElementById('canvas_screen') as HTMLVideoElement;
-        if (!videoElement) {
-            console.error('Video element not found!');
-            return;
-        }
-        videoElement.srcObject = stream;
-        videoElement.play();
+        const mediaRecorder = new MediaRecorder(stream, {
+            mimeType: 'video/webm; codecs=vp8'
+        });
+
+        mediaRecorder.ondataavailable = async event => {
+            if (event.data.size > 0) {
+                const buffer = await event.data.arrayBuffer(); // 转换 Blob 为 ArrayBuffer
+                //@ts-ignore
+                window.backgroundApi.on_stream(Buffer.from(buffer)); // 发送 WebM 数据到主进程
+            }
+        };
+
+        mediaRecorder.start(1000); // 每秒发送一次
+
+        // videoElement = document.getElementById('canvas_screen') as HTMLVideoElement;
+        // if (!videoElement) {
+        //     console.error('Video element not found!');
+        //     return;
+        // }
+
+        // videoElement.srcObject = stream;
+        // videoElement.play();
     };
     useTimeoutLoop(async () => {
         if (

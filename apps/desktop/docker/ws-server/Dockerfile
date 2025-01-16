@@ -8,8 +8,10 @@ WORKDIR /app
 RUN npm init -y
 
 # 安装 TypeScript 及相关依赖
-RUN npm install typescript ts-node ws
+RUN npm install typescript ts-node ws crypto
 
+cp ../../src/electron/ws-server/main.ts ./
+cp ../../src/electron/ws-server/server.ts ./
 # 复制当前目录所有文件到容器内
 COPY ./main.ts ./
 COPY ./server.ts ./
@@ -21,5 +23,5 @@ RUN npx tsc
 # 启动 main.ts
 CMD ["node", "main.js"]
 
-# docker build -t my-ts-server .
-# docker run -p 80:6788 my-ts-server
+# docker build -t ctl-server .
+# docker run -d --name ctl-server -p 6788:6788 ctl-server
