@@ -109,7 +109,7 @@ export abstract class MainWindow {
             backgroundColor: '#232323',
             icon,
             webPreferences: {
-                allowRunningInsecureContent: false,
+                allowRunningInsecureContent: true,
                 experimentalFeatures: false,
                 spellcheck: false,
                 nodeIntegration: true,

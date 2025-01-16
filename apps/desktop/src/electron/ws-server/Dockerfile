@@ -19,7 +19,7 @@ RUN npx tsc --init
 RUN npx tsc
 
 # 启动 main.ts
-CMD ["node", "dist/main.js"]
+CMD ["node", "main.js"]
 
 # docker build -t my-ts-server .
-# docker run -p 443:6788 my-ts-server
+# docker run -p 80:6788 my-ts-server
