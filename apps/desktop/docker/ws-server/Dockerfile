@@ -18,9 +18,7 @@ COPY ./main.ts .
 COPY ./server.ts .
 
 # 运行 TypeScript 编译
-RUN npx tsc --init
-RUN npx tsc
-
+RUN npx tsc --init && npx tsc
 # 启动 main.ts
 CMD ["node", "main.js"]
 
