@@ -1,6 +1,9 @@
 //@ts-nocheck
 import os from 'os';
 import WebSocket, { WebSocketServer } from 'ws';
+import { v4: uuidv4 } from 'uuid';
+
+const {  } = require('uuid');
 
 export function getLocalIPAddress() {
     const networkInterfaces = os.networkInterfaces();
@@ -235,7 +238,7 @@ export class WebSocketServerWrapper {
     }
 
     async handleWebSocketSession(ws: WebSocket, metadata?: any) {
-        const userId = crypto.randomUUID();
+        const userId = uuidv4();;
         console.log('connected', userId);
         this.users.set(userId, {
             id: userId,

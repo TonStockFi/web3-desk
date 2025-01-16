@@ -9,7 +9,7 @@ WORKDIR /app
 RUN npm init -y
 
 # 安装 TypeScript 及相关依赖
-RUN npm install typescript ts-node ws crypto
+RUN npm install typescript ts-node ws uuid
 
 # cp ../../src/electron/ws-server/main.ts ./
 # cp ../../src/electron/ws-server/server.ts ./
