@@ -8,12 +8,14 @@ WORKDIR /app
 RUN npm init -y
 
 # 安装 TypeScript 及相关依赖
-RUN npm install typescript ts-node
+RUN npm install typescript ts-node ws
 
 # 复制当前目录所有文件到容器内
-COPY . .
+COPY ./main.ts ./
+COPY ./server.ts ./
 
 # 运行 TypeScript 编译
+RUN npx tsc --init
 RUN npx tsc
 
 # 启动 main.ts
