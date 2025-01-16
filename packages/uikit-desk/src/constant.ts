@@ -1,3 +1,3 @@
 
-export const WS_URL = 'ws://127.0.0.1:6788/api';
+export const WS_URL = 'wss://ws.web3r.site';
 export const SERVER_PORT = 6788;

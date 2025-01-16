@@ -180,7 +180,7 @@ export default function HomePage({
                                     }}
                                 ></View>
                             </View>
-                            <View mt12 hide={isDesktop()}>
+                            <View mt12>
                                 <ServerCard />
                             </View>
                             {/* <View mt12 hide={!isDesktop()}>
