@@ -1,4 +1,4 @@
-import { ChildProcessWithoutNullStreams, exec, spawn } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { app, BrowserWindow, desktopCapturer, ipcMain, screen, shell, Tray } from 'electron';
 import contextMenu from 'electron-context-menu';
 import isDev from 'electron-is-dev';
@@ -19,31 +19,6 @@ contextMenu({
     showSelectAll: false
 });
 
-let ffmpeg: ChildProcessWithoutNullStreams = null;
-
-function startFFmpeg() {
-    ffmpeg = spawn("ffmpeg", [
-        "-re",               // 以实时速度处理
-        "-i", "pipe:0",      // 读取 WebM 数据
-        "-c:v", "libx264",   // 转码 H.264
-        "-preset", "ultrafast",
-        "-tune", "zerolatency",
-        "-b:v", "2500k",
-        "-c:a", "aac",       // 音频转码
-        "-b:a", "128k",
-        "-f", "flv",         // 输出 FLV（RTMP 兼容）
-        "rtmp://your-rtmp-server/live/stream_key"
-    ]);
-
-    ffmpeg.stderr.on("data", (data:any) => {
-        console.log(`FFmpeg: ${data}`);
-    });
-
-    ffmpeg.on("close", () => {
-        console.log("FFmpeg stopped");
-        ffmpeg = null;
-    });
-}
 
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
@@ -188,13 +163,6 @@ export abstract class MainWindow {
                         types: types || ['window', 'screen']
                     });
                 }
-                case 'on_stream': {
-                    let { data } = payload;
-                    console.log(data)
-                    // if (!ffmpeg) startFFmpeg();
-                    // ffmpeg.stdin.write(data); // 将 WebM 数据传输给 FFmpeg
-                    return true
-                }
                 case 'stop_server': {
                     return WebSocketServerWrapper.stopServer();
                 }
@@ -313,7 +281,19 @@ function open_ctl_server(): any {
         if (isWin) {
             process = spawn(file, [], { detached: true, stdio: "ignore" });
         } else {
-            process = spawn(file, [], { detached: true, stdio: "ignore" });
+
+            if (isMac && isDev) {
+                // Use `open -a Terminal` to open a new Terminal window and execute the command
+                exec(`sh /Users/ton/Desktop/projects/web3-desk/apps/py-bot/start.sh`, error => {
+                    if (error) {
+                        console.error(`Failed to start the Web3 Control Server: ${error.message}`);
+                    }
+                });
+                
+            }else{
+                process = spawn(file, [], { detached: true, stdio: "ignore" });
+
+            }
         }
 
         process.unref(); // 让进程独立运行，不受 Electron 退出影响

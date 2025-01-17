@@ -3,7 +3,7 @@ import os from 'os';
 import { v4 as uuidv4 } from 'uuid';
 import WebSocket, { WebSocketServer } from 'ws';
 
-const {  } = require('uuid');
+const {} = require('uuid');
 
 export function getLocalIPAddress() {
     const networkInterfaces = os.networkInterfaces();
@@ -122,44 +122,77 @@ function checkUser(users: Map<any, User>, ws: WebSocket, deviceId: string, passw
     }
 }
 
+let ffmpeg: ChildProcessWithoutNullStreams = null;
+
+function startFFmpeg() {
+    ffmpeg = spawn('ffmpeg', [
+        '-re', // 以实时速度处理
+        '-i',
+        'pipe:0', // 读取 WebM 数据
+        '-c:v',
+        'libx264', // 转码 H.264
+        '-preset',
+        'ultrafast',
+        '-tune',
+        'zerolatency',
+        '-b:v',
+        '2500k',
+        '-c:a',
+        'aac', // 音频转码
+        '-b:a',
+        '128k',
+        '-f',
+        'flv', // 输出 FLV（RTMP 兼容）
+        'rtmp://rtmp.web3r.site//live/stream_key'
+    ]);
+
+    ffmpeg.stderr.on('data', (data: any) => {
+        console.log(`FFmpeg: ${data}`);
+    });
+
+    ffmpeg.on('close', () => {
+        console.log('FFmpeg stopped');
+        ffmpeg = null;
+    });
+}
 function getMetaData(userAgent?: string, request?: any) {
     return {
         userAgent
     };
 }
 
-let _serverIsReady = false
-let _server:WebSocketServerWrapper|null = null
-let _serverCtl:WebSocketServerWrapper|null = null
+let _serverIsReady = false;
+let _server: WebSocketServerWrapper | null = null;
+let _serverCtl: WebSocketServerWrapper | null = null;
 // let _serverFile:WebSocketServerWrapper|null = null
 
 export class WebSocketServerWrapper {
     private users: Map<string, User>;
     private wss: WebSocketServer | undefined;
     private port: number;
-    
+
     constructor(port: number = 6788) {
         this.port = port;
         this.users = new Map();
     }
-    static async startServer(port? :number){
-        if(!port){
-            port = 6788
+    static async startServer(port?: number) {
+        if (!port) {
+            port = 6788;
         }
-        if(!_server){
+        if (!_server) {
             _server = new WebSocketServerWrapper(port);
             _serverCtl = new WebSocketServerWrapper(port + 1);
             // _serverFile = new WebSocketServerWrapper(port + 2);
             await Promise.all([
                 _server.start(),
-                _serverCtl.start(),
+                _serverCtl.start()
                 // _serverFile.start(),
             ]);
         }
-        return  true;
+        return true;
     }
 
-    static async stopServer(){
+    static async stopServer() {
         const stops = [];
 
         if (_server) {
@@ -173,14 +206,13 @@ export class WebSocketServerWrapper {
         // }
 
         await Promise.all(stops);
-        _server = null
+        _server = null;
         // _serverFile = null
-        _serverCtl = null
-         return true
-        
+        _serverCtl = null;
+        return true;
     }
-    static serverIsReady(){
-        return _serverIsReady
+    static serverIsReady() {
+        return _serverIsReady;
     }
     public start(): Promise<boolean> {
         return new Promise((resolve, reject) => {
@@ -199,6 +231,8 @@ export class WebSocketServerWrapper {
             });
 
             this.wss.on('connection', async (ws: WebSocket, req: any) => {
+                // 启动 FFmpeg 进程
+
                 const userAgent = req.headers['user-agent'];
                 const metadata = getMetaData(userAgent);
                 console.log('New client connected');
@@ -238,7 +272,7 @@ export class WebSocketServerWrapper {
     }
 
     async handleWebSocketSession(ws: WebSocket, metadata?: any) {
-        const userId = uuidv4();;
+        const userId = uuidv4();
         console.log('connected', userId);
         this.users.set(userId, {
             id: userId,
@@ -249,6 +283,7 @@ export class WebSocketServerWrapper {
             client: null
         });
 
+        let ffmpeg = null
         ws.addEventListener('message', async msg => {
             try {
                 this.users.forEach((user_, _) => {
@@ -262,7 +297,6 @@ export class WebSocketServerWrapper {
                 });
                 const message = msg.data;
                 if (typeof message === 'string' && message.startsWith('{')) {
-                    
                     const data = JSON.parse(message);
                     // console.log(">> ",data.action)
                     if (data.action === 'registerCtl') {
@@ -383,6 +417,29 @@ export class WebSocketServerWrapper {
                         const { deviceId, password } = user.client;
                         const deviceUser = checkUser(this.users, ws, deviceId, password);
                         if (deviceUser) {
+                            if(!ffmpeg){
+                                ffmpeg = spawn('ffmpeg', [
+                                    '-re', // 以实时速度处理
+                                    '-i',
+                                    'pipe:0', // 读取 WebM 数据
+                                    '-c:v',
+                                    'libx264', // 转码 H.264
+                                    '-preset',
+                                    'ultrafast',
+                                    '-tune',
+                                    'zerolatency',
+                                    '-b:v',
+                                    '2500k',
+                                    '-c:a',
+                                    'aac',
+                                    '-b:a',
+                                    '128k',
+                                    '-f',
+                                    'flv',
+                                    'rtmp://nginx-rtmp:1935/live/stream_key' // Target RTMP server URL
+                                ]);
+                        
+                            }
                             sendMessage(message, deviceUser.ws);
                         }
                         return;
@@ -405,7 +462,7 @@ export class WebSocketServerWrapper {
                             if (user_.client && user_.client.deviceId === user.device.deviceId) {
                                 try {
                                     sendMessage(message, user_.ws);
-                                    count = 1
+                                    count = 1;
                                 } catch (e) {
                                     console.error(e, user_.ws);
                                 }
@@ -414,13 +471,23 @@ export class WebSocketServerWrapper {
                         // console.log({count})
                         return;
                     }
+                } else {
+                    console.log(new Date(),"ffmpeg.stdin.write",!!ffmpeg)
+                    if(ffmpeg){
+                        ffmpeg.stdin.write(msg.data); // 传递 WebM 片段
+                    }
                 }
             } catch (err: any) {
-                console.error("error",err);
+                console.error('error', err);
             }
         });
 
         let closeOrErrorHandler = () => {
+            if(ffmpeg){
+                ffmpeg.stdin.end();
+                ffmpeg.kill();
+            }
+            console.log('Client disconnected');
             const user = this.users.get(userId);
             console.log('closeOrErrorHandler');
             if (user.device) {

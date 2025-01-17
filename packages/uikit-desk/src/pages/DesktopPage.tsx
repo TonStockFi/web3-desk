@@ -360,7 +360,7 @@ export default function DesktopPage() {
             if (event.data.size > 0) {
                 const buffer = await event.data.arrayBuffer(); // 转换 Blob 为 ArrayBuffer
                 //@ts-ignore
-                window.backgroundApi.on_stream(Buffer.from(buffer)); // 发送 WebM 数据到主进程
+                // window.backgroundApi.on_stream(Buffer.from(buffer)); // 发送 WebM 数据到主进程
             }
         };
 
@@ -511,7 +511,7 @@ export default function DesktopPage() {
     return (
         <View absFull position={'fixed'}>
             <View>
-                <AppInner></AppInner>
+                <AppInner />
             </View>
             <View column displayNone>
                 <View wh={800}>

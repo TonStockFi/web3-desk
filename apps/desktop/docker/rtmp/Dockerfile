@@ -2,7 +2,7 @@
 FROM alfg/nginx-rtmp:latest
 
 # Expose  HTTP ports
-EXPOSE 80
+EXPOSE 80 1935
 
 RUN mkdir -p /var/log/nginx && chmod 755 /var/log/nginx
 
@@ -18,5 +18,5 @@ CMD ["nginx", "-g", "daemon off;"]
 # docker build -t nginx-rtmp .
 
 # Run the container
-# docker run --network web3r_network -d --name rtmp-server -p 80:80 nginx-rtmp
-# docker run --network web3r_network --name rtmp-server -p 80:80 nginx-rtmp
+# docker run --network web3r_network -d --name rtmp-server -p 80:80 -p 8388:1935 nginx-rtmp
+# docker run --network web3r_network --name rtmp-server -p 80:80 -p 8388:1935 nginx-rtmp

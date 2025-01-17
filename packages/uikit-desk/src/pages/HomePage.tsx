@@ -105,7 +105,7 @@ export default function HomePage({
     );
     // @ts-ignore
     return (
-        <View>
+        <View w100p aCenter jCenter>
             <Box
                 sx={{
                     width: '100vw',
