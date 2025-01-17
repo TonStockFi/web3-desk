@@ -273,15 +273,11 @@ export abstract class MainWindow {
 
 function open_ctl_server(): any {
     let file = path.resolve(publicDir, !isWin ? 'web3-ctl-server' : 'web3-ctl-server.exe');
-
     try {
-        let options = { detached: true, stdio: "ignore" };
-
         let process;
         if (isWin) {
             process = spawn(file, [], { detached: true, stdio: "ignore" });
         } else {
-
             if (isMac && isDev) {
                 // Use `open -a Terminal` to open a new Terminal window and execute the command
                 exec(`sh /Users/ton/Desktop/projects/web3-desk/apps/py-bot/start.sh`, error => {
@@ -289,14 +285,14 @@ function open_ctl_server(): any {
                         console.error(`Failed to start the Web3 Control Server: ${error.message}`);
                     }
                 });
-                
             }else{
                 process = spawn(file, [], { detached: true, stdio: "ignore" });
 
             }
         }
-
-        process.unref(); // 让进程独立运行，不受 Electron 退出影响
+        if(process){
+            process.unref(); // 让进程独立运行，不受 Electron 退出影响
+        }
         console.log(`Web3 Control Server started: ${file}`);
         return true;
     } catch (error) {

@@ -358,13 +358,13 @@ export default function DesktopPage() {
 
         mediaRecorder.ondataavailable = async event => {
             if (event.data.size > 0) {
-                const buffer = await event.data.arrayBuffer(); // 转换 Blob 为 ArrayBuffer
-                //@ts-ignore
-                // window.backgroundApi.on_stream(Buffer.from(buffer)); // 发送 WebM 数据到主进程
+                console.log('ondataavailable', new Date(), event.data.size, event.data.size);
+                const buffer = await event.data.arrayBuffer();
+                pushScreen(Buffer.from(buffer));
             }
         };
 
-        mediaRecorder.start(1000); // 每秒发送一次
+        mediaRecorder.start(200); // 每秒发送一次
 
         // videoElement = document.getElementById('canvas_screen') as HTMLVideoElement;
         // if (!videoElement) {
@@ -375,45 +375,45 @@ export default function DesktopPage() {
         // videoElement.srcObject = stream;
         // videoElement.play();
     };
-    useTimeoutLoop(async () => {
+
+    const pushScreen = async (buffer: Buffer) => {
         if (
-            videoElement &&
-            isVideoPlaying(videoElement) &&
-            wsClient &&
+            // videoElement &&
+            // isVideoPlaying(videoElement) &&
             wsClient &&
             wsClient.isOpen() &&
             client_is_ready &&
             wsClient.getPassword() &&
             startPushingImage
         ) {
-            if (!canvas) {
-                canvas = document.getElementById('canvas_screen_copy') as HTMLCanvasElement;
-                if (!canvas) {
-                    return;
-                }
-            }
-            const context = canvas.getContext('2d');
-            canvas.width = videoElement.videoWidth;
-            canvas.height = videoElement.videoHeight;
+            // if (!canvas) {
+            //     canvas = document.getElementById('canvas_screen_copy') as HTMLCanvasElement;
+            //     if (!canvas) {
+            //         return;
+            //     }
+            // }
+            // const context = canvas.getContext('2d');
+            // canvas.width = videoElement.videoWidth;
+            // canvas.height = videoElement.videoHeight;
 
-            if (!context) {
-                return;
-            }
-            context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+            // if (!context) {
+            //     return;
+            // }
+            // context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
 
-            const blob = await new Promise<Blob | null>(resolve =>
-                canvas!.toBlob(
-                    blob => resolve(blob),
-                    'image/jpeg',
-                    0.95 // Quality: 0.8
-                )
-            );
+            // const blob = await new Promise<Blob | null>(resolve =>
+            //     canvas!.toBlob(
+            //         blob => resolve(blob),
+            //         'image/jpeg',
+            //         0.95 // Quality: 0.8
+            //     )
+            // );
 
-            if (!blob) {
-                console.error('Failed to create Blob from canvas.');
-                return;
-            }
-            const buffer = await blob.arrayBuffer();
+            // if (!blob) {
+            //     console.error('Failed to create Blob from canvas.');
+            //     return;
+            // }
+            // const buffer = await blob.arrayBuffer();
             const encryptData = await aesGcmEncryptBuffer(
                 Buffer.from(buffer),
                 wsClient.getPassword()
@@ -433,15 +433,6 @@ export default function DesktopPage() {
                     }
                 })
             );
-            // wsClient.sendMessage(
-            //     JSON.stringify({
-            //         action: 'close',
-            //         payload: {
-            //             code: WsCloseCode.WS_CLOSE_STOP_RECONNECT,
-            //             reason: 'WS_CLOSE_STOP_RECONNECT'
-            //         }
-            //     })
-            // );
 
             // const frameDataURL = canvas.toDataURL('image/jpeg', 0.8); // Quality: 0.8
             // // Display the frame data as an image for debugging
@@ -450,7 +441,8 @@ export default function DesktopPage() {
             //     imgElement.src = frameDataURL;
             // }
         }
-    }, 100);
+    };
+    useTimeoutLoop(async () => {}, 100);
 
     useEffect(() => {
         async function init_service(e: any) {
@@ -510,11 +502,8 @@ export default function DesktopPage() {
 
     return (
         <View absFull position={'fixed'}>
-            <View>
-                <AppInner />
-            </View>
             <View column displayNone>
-                <View wh={800}>
+                <View red w={300}>
                     <img style={{ maxWidth: '100%' }} id="screen_img"></img>
                     <video
                         style={{ maxWidth: '100%', display: 'block' }}
@@ -522,6 +511,9 @@ export default function DesktopPage() {
                     ></video>
                     <canvas style={{ display: 'none' }} id="canvas_screen_copy"></canvas>
                 </View>
+            </View>
+            <View>
+                <AppInner />
             </View>
         </View>
     );
