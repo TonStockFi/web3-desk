@@ -160,6 +160,10 @@ export default function HomePage({
                                     serviceMediaIsRunning={serviceMediaIsRunning}
                                 />
                             </Box>
+
+                            <View mt12>
+                                <ServerCard />
+                            </View>
                             <View rowVCenter center mt12>
                                 <View
                                     hide={!isMac()}
@@ -179,9 +183,6 @@ export default function HomePage({
                                         );
                                     }}
                                 ></View>
-                            </View>
-                            <View mt12>
-                                <ServerCard />
                             </View>
                             {/* <View mt12 hide={!isDesktop()}>
                                 <PythonPathView />
@@ -274,7 +275,7 @@ export default function HomePage({
                         <SwerverManager />
                     </Box>
                 )}
-                {isDesktop() && (
+                {0 && (
                     <Box sx={{ position: 'fixed', bottom: 0, left: 0, right: 0 }}>
                         <BottomNavigationView tabId={tabId} setTabId={setTabId} />
                     </Box>
