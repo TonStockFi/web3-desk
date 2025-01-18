@@ -134,7 +134,7 @@ export default function HomePage({
                         </Box>
                         <Box
                             sx={{
-                                pt: isDesktop() ? 6 : undefined,
+                                pt: isDesktop() ? 3 : undefined,
                                 m: 1
                             }}
                         >
@@ -161,7 +161,7 @@ export default function HomePage({
                                 />
                             </Box>
 
-                            <View mt12>
+                            <View mt12 hide>
                                 <ServerCard />
                             </View>
                             <View rowVCenter center mt12>
