@@ -1,6 +1,6 @@
 import WindowIcon from '@mui/icons-material/Window';
 import { View } from '@web3-explorer/uikit-view/dist/View';
-import { useLocalStorageState } from '@web3-explorer/utils';
+import { useLocalStorageState, useTimeoutLoop } from '@web3-explorer/utils';
 import { useEffect, useState } from 'react';
 import { default as AppAPI } from '../common/AppApi';
 
@@ -558,7 +558,6 @@ export function WinsView() {
         if (video_id === 'video_preview') {
             setLoading(true);
         }
-        debugger;
         const stream = await navigator.mediaDevices.getUserMedia({
             audio: false,
             video: {
@@ -585,30 +584,41 @@ export function WinsView() {
         if (video_id === 'video_preview') {
             setLoading(false);
         }
-        if (isThumbnail) {
-            videoElement!.onplay = () => {
-                const image = captureFrame(videoElement!);
-                const thumbnailElement = document.getElementById(
-                    video_id.replace('win', 'pic')
-                ) as HTMLImageElement;
-                if (thumbnailElement && image) {
-                    thumbnailElement.src = image;
-                }
-                destroyStream(stream);
-                videoElement!.srcObject = null;
-            };
-        }
+
+        await new Promise(resolve => {
+            if (isThumbnail) {
+                videoElement!.onplay = () => {
+                    const image = captureFrame(videoElement!);
+                    const thumbnailElement = document.getElementById(
+                        video_id.replace('win', 'pic')
+                    ) as HTMLImageElement;
+                    if (thumbnailElement && image) {
+                        thumbnailElement.src = image;
+                    }
+                    destroyStream(stream);
+                    videoElement!.srcObject = null;
+                };
+            }
+            resolve(true);
+        });
     };
     useEffect(() => {
         new AppAPI().get_sources(['window', 'screen']).then(setSources);
     }, []);
 
-    useEffect(() => {
-        for (let index = 0; index < sources.length; index++) {
-            const source = sources[index] as any;
-            getScreent(source, getVideoId(source), true);
+    useTimeoutLoop(async () => {
+        if (sources.length === 0) {
+            return;
         }
-    }, [sources]);
+        console.log({ sources });
+        // for (let index = 0; index < sources.length; index++) {
+        //     const source = sources[index] as any;
+        //     console.log('getScreent', source.name);
+        //     await getScreent(source, getVideoId(source), true);
+        //     sleep(100);
+        // }
+        // sleep(5000);
+    });
 
     const selectedSource = sources.find(
         (row: { id: string; name: string }) => row.id === currentSourceId
@@ -626,7 +636,7 @@ export function WinsView() {
     }
     return (
         <>
-            <View absFull right0 left={180} top0 bottom={0} p={12} center>
+            <View absFull right0 left={240} top0 bottom={0} p={12} center>
                 <View
                     abs
                     top={0}
@@ -670,37 +680,39 @@ export function WinsView() {
             <View
                 abs
                 left0
-                w={180}
+                w={240}
                 top0
                 bottom0
-                px12
                 borderBox
+                bgColor="#3b3b3b"
                 overflowYAuto
                 sx={{
                     borderRight: '1px solid #e9e9e9'
                 }}
             >
                 <View column w100p aCenter pt12>
-                    {sources.map((source: any) => {
-                        return (
-                            <WinView
-                                currentSourceId={currentSourceId}
-                                onClick={() => {
-                                    console.log('wsPyCtlClient', !!wsPyCtlClient);
-                                    if (wsPyCtlClient) {
-                                        wsPyCtlClient.sendJsonMessage({
-                                            eventType: 'activeWin',
-                                            winName: source.name
-                                        });
-                                    }
-                                    setCurrentSourceId(source.id);
-                                    getScreent(source, 'video_preview');
-                                }}
-                                source={source}
-                                key={source.id}
-                            ></WinView>
-                        );
-                    })}
+                    <View list>
+                        {sources.map((source: any) => {
+                            return (
+                                <WinView
+                                    currentSourceId={currentSourceId}
+                                    onClick={() => {
+                                        console.log('wsPyCtlClient', !!wsPyCtlClient);
+                                        if (wsPyCtlClient) {
+                                            wsPyCtlClient.sendJsonMessage({
+                                                eventType: 'activeWin',
+                                                winName: source.name
+                                            });
+                                        }
+                                        setCurrentSourceId(source.id);
+                                        getScreent(source, 'video_preview');
+                                    }}
+                                    source={source}
+                                    key={source.id}
+                                ></WinView>
+                            );
+                        })}
+                    </View>
                 </View>
             </View>
         </>
@@ -720,43 +732,11 @@ export function WinView({
 }) {
     return (
         <View
-            column
+            listSelected={source.id === currentSourceId}
+            listItemText={source.name.substring(0, 20)}
             onClick={onClick}
-            pointer
             borderBox
-            mb12
-            py={6}
-            px12
-            borderRadius={8}
-            bgColor={currentSourceId === source.id ? 'rgba(0,0,0,0.3)' : undefined}
-            sx={{
-                width: 150,
-                '& .MuiTypography-root ': { color: '#333' }
-            }}
-            // tips={source.name}
             key={source.id}
-        >
-            <View
-                textFontSize="0.7rem"
-                sx={{ textAlign: 'center' }}
-                text={source.name.substring(0, 20)}
-            ></View>
-            <View borderBox w100p h={80} center relative>
-                <View absFull center>
-                    <video
-                        style={{ maxWidth: '100%', maxHeight: '100%' }}
-                        src=""
-                        id={getVideoId(source)}
-                    ></video>
-                </View>
-                <View absFull center>
-                    <img
-                        style={{ maxWidth: '100%', maxHeight: '100%' }}
-                        src=""
-                        id={getVideoId(source).replace('win', 'pic')}
-                    ></img>
-                </View>
-            </View>
-        </View>
+        ></View>
     );
 }

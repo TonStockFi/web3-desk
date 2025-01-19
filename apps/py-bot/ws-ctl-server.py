@@ -51,6 +51,14 @@ def activate_window(handle):
     """Activate a window by handle (Windows only)."""
     win32gui.SetForegroundWindow(handle)
 
+def move_window(handle, x, y):
+    """Move a window to the specified (x, y) position (Windows only)."""
+    rect = win32gui.GetWindowRect(handle)  # Get current window size
+    width = rect[2] - rect[0]  # Calculate width
+    height = rect[3] - rect[1]  # Calculate height
+    win32gui.SetWindowPos(handle, win32con.HWND_TOP, x, y, width, height, win32con.SWP_NOZORDER)
+
+
 async def handle_client(websocket):
     async for message in websocket:
         try:
@@ -90,29 +98,30 @@ async def handle_client(websocket):
                         exec(script)
                     except Exception as e:
                         print(f"Error executing pyautogui script: {e}")
-
-            elif event_type == "activeWin":
+            elif event_type == "getWindows":
+                windows = get_window_info()
+                await websocket.send(json.dumps({
+                    "action": "onGetWindows",
+                    "payload": {"windows": windows}
+                }))
+            elif event_type == "ctlWin":
                 win_name = msg.get('winName', '').lower()
+                action = msg.get('action', '').lower()
                 windows = get_window_info()
                 matching_window = next((win for win in windows if win_name in win.get('title', '').lower()), None)
-
                 if matching_window:
                     print(f"Found Window: {matching_window}")
-                    try:
-                        await websocket.send(json.dumps({
-                            "action": "onWinInfo",
-                            "payload": {"winInfo": matching_window}
-                        }))
-                    except websockets.exceptions.ConnectionClosed as e:
-                        print(f"WebSocket connection closed: {e}")
-
                     if sys.platform == "win32":
-                        activate_window(matching_window['handle'])
+                        if action == 'move':
+                            x = msg.get('x', 0)
+                            y = msg.get('y', 0)
+                            move_window(matching_window['handle'],x,y)
+                        if action == 'active':
+                            activate_window(matching_window['handle'])
                     else:
                         activate_window_by_title(matching_window['title'])
                 else:
                     print("No matching window found!")
-
             else:
                 print(f"Unknown eventType: {event_type}")
 
