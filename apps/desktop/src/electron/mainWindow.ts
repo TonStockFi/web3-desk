@@ -104,8 +104,8 @@ export abstract class MainWindow {
             y: isDev ? 0 : undefined,
             darkTheme: true,
             resizable: true,
-            width: 360,
-            minWidth: 360,
+            width: 880,
+            minWidth: 880,
             height: 640,
             minHeight: 640,
             backgroundColor: '#232323',
@@ -125,6 +125,7 @@ export abstract class MainWindow {
         const url = isDev ? 'http://localhost:5173' : 'https://web3-desk.web3r.site';
         this.mainWindow.loadURL(url);
         this.mainWindow.show();
+        
         
         ipcMain.handle('message', async (e: any, message: { action: string; payload: any }) => {
             const { action, payload } = message;

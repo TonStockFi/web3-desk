@@ -1,7 +1,7 @@
+import WindowIcon from '@mui/icons-material/Window';
 import { View } from '@web3-explorer/uikit-view/dist/View';
-import { useTimeoutLoop } from '@web3-explorer/utils';
-import { useEffect } from 'react';
-
+import { useLocalStorageState } from '@web3-explorer/utils';
+import { useEffect, useState } from 'react';
 import { default as AppAPI } from '../common/AppApi';
 
 import { isMac } from '../common/utils';
@@ -130,6 +130,7 @@ class WebSocketClient {
 
         const videoElement = document.getElementById('video') as HTMLVideoElement;
 
+        videoElement!.srcObject! = stream;
         stream.getTracks().forEach(track => {
             const sender = this.peerConnection.addTrack(track, stream);
 
@@ -162,10 +163,6 @@ class WebSocketClient {
                 offer
             }
         });
-
-        videoElement!.srcObject! = stream;
-        // await new Promise(resolve => (videoElement!.onloadedmetadata = resolve));
-        // videoElement!.play();
     }
     async init() {
         const ws = new WebSocket(this.url);
@@ -338,10 +335,7 @@ export async function initClients(
     retry_count = 0;
     const urls = apiUrl.split('\n');
     console.log('initClients', { urls, deviceId, password, passwordHash });
-    if (!wsPyCtlClient) {
-        new AppAPI().open_ctl_server();
-        wsPyCtlClient = new WebSocketCtlClient('ws://127.0.0.1:6790');
-    }
+
     try {
         for (let index = 0; index < urls.length; index++) {
             let url = urls[index];
@@ -405,37 +399,11 @@ export function sleep(ms: number): Promise<void> {
 }
 
 export default function DesktopPage() {
-    useTimeoutLoop(async () => {
-        const getData = () => {
-            return new Promise(resolve => {
-                // Wait for the video to be playing, then draw the video frame to the canvas
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-                const videoElement = document.getElementById('video') as HTMLVideoElement;
-
-                // Set canvas dimensions to match the video frame
-                canvas.width = videoElement.videoWidth;
-                canvas.height = videoElement.videoHeight;
-
-                // Draw the current frame from the video to the canvas
-                context?.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-                // Convert the canvas to an image (Base64 encoded PNG)
-                canvas.toBlob(
-                    async blob => {
-                        resolve(await blob?.arrayBuffer());
-                    },
-                    'image/jpeg',
-                    0.9
-                );
-            });
-        };
-        if (wsClient && startPushingImage) {
-            const res = await getData();
-            wsClient?.sendMessage(res);
-        }
-    }, 200);
-
     useEffect(() => {
+        if (!wsPyCtlClient) {
+            new AppAPI().open_ctl_server();
+            wsPyCtlClient = new WebSocketCtlClient('ws://127.0.0.1:6790');
+        }
         async function init_service(e: any) {
             const { apiUrl, password, passwordHash } = e.detail;
             const r = localStorage.getItem(KEY_DEVICE_ID);
@@ -466,6 +434,7 @@ export default function DesktopPage() {
                 const videoElement = document.getElementById('video') as HTMLVideoElement;
 
                 if (videoElement) {
+                    await new Promise(resolve => (videoElement!.onloadedmetadata = resolve));
                     videoElement!.play();
                 }
 
@@ -494,20 +463,299 @@ export default function DesktopPage() {
             window.removeEventListener('stop_service', stop_service);
         };
     }, []);
+    const leftActions = [
+        {
+            icon: 'Link',
+            name: '连接'
+        },
+        {
+            icon: <WindowIcon></WindowIcon>,
+            name: '桌面'
+        }
+    ];
+    const [curentPage, setCurrentPage] = useLocalStorageState('curentPage', 0);
 
     return (
-        <View absFull position={'fixed'}>
-            <View column displayNone>
-                <View wh={400}>
-                    <video
-                        style={{ border: '1px solid black', maxWidth: '100%', display: 'block' }}
-                        id="video"
-                    ></video>
-                    <img src="" id={'img'} alt="" />
+        <View>
+            <View absFull position={'fixed'} left={0} w={52} bgColor="#1b1b1b">
+                <View wh100p pt12 borderBox column aCenter>
+                    {leftActions.map((leftAction, i) => {
+                        return (
+                            <View
+                                pointer
+                                onClick={() => {
+                                    setCurrentPage(i);
+                                }}
+                                bgColor={curentPage === i ? '#3b3b3b' : ''}
+                                key={leftAction.name}
+                                center
+                                wh={44}
+                                borderRadius={4}
+                                hoverBgColor={'#222224'}
+                                mb12
+                            >
+                                <View icon={leftAction.icon}></View>
+                            </View>
+                        );
+                    })}
                 </View>
             </View>
-            <View>
-                <AppInner />
+            <View absFull position={'fixed'} left={52} displayNone={curentPage !== 0}>
+                <View column displayNone>
+                    <View wh={400}>
+                        <video
+                            style={{
+                                border: '1px solid black',
+                                maxWidth: '100%',
+                                display: 'block'
+                            }}
+                            id="video"
+                        ></video>
+                        <img src="" id={'img'} alt="" />
+                    </View>
+                </View>
+                <View>
+                    <AppInner />
+                </View>
+            </View>
+            <View absFull position={'fixed'} left={52} hide={curentPage !== 1}>
+                <WinsView />
+            </View>
+        </View>
+    );
+}
+
+const captureFrame = (videoElement: HTMLVideoElement) => {
+    if (!videoElement) return null;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = videoElement.videoWidth;
+    canvas.height = videoElement.videoHeight;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+
+    // Draw the current video frame onto the canvas
+    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+    // Convert the canvas to a data URL (base64 image)
+    const imageData = canvas.toDataURL('image/png');
+
+    // console.log('Captured Image:', imageData);
+    return imageData;
+};
+
+const destroyStream = (stream: MediaStream) => {
+    stream.getTracks().forEach(track => track.stop());
+};
+
+export function WinsView() {
+    const [sources, setSources] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [currentSourceId, setCurrentSourceId] = useLocalStorageState('currentSourceId', '');
+
+    const getScreent = async (screenSource: any, video_id: string, isThumbnail?: boolean) => {
+        if (video_id === 'video_preview') {
+            setLoading(true);
+        }
+        debugger;
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: {
+                ...({
+                    mandatory: {
+                        minWidth: 1920,
+                        minHeight: 1080,
+                        minFrameRate: 30,
+                        chromeMediaSource: 'desktop',
+                        chromeMediaSourceId: screenSource.id
+                    }
+                } as any)
+            }
+        });
+
+        const videoElement = document.getElementById(video_id) as HTMLVideoElement;
+        if (!videoElement) {
+            destroyStream(stream);
+            return;
+        }
+        videoElement!.srcObject! = stream;
+        await new Promise(resolve => (videoElement!.onloadedmetadata = resolve));
+        videoElement!.play();
+        if (video_id === 'video_preview') {
+            setLoading(false);
+        }
+        if (isThumbnail) {
+            videoElement!.onplay = () => {
+                const image = captureFrame(videoElement!);
+                const thumbnailElement = document.getElementById(
+                    video_id.replace('win', 'pic')
+                ) as HTMLImageElement;
+                if (thumbnailElement && image) {
+                    thumbnailElement.src = image;
+                }
+                destroyStream(stream);
+                videoElement!.srcObject = null;
+            };
+        }
+    };
+    useEffect(() => {
+        new AppAPI().get_sources(['window', 'screen']).then(setSources);
+    }, []);
+
+    useEffect(() => {
+        for (let index = 0; index < sources.length; index++) {
+            const source = sources[index] as any;
+            getScreent(source, getVideoId(source), true);
+        }
+    }, [sources]);
+
+    const selectedSource = sources.find(
+        (row: { id: string; name: string }) => row.id === currentSourceId
+    );
+    useEffect(() => {
+        if (selectedSource) {
+            getScreent(selectedSource, 'video_preview');
+        }
+    }, [selectedSource]);
+
+    let title = '';
+    if (selectedSource) {
+        //@ts-ignore
+        title = selectedSource.name;
+    }
+    return (
+        <>
+            <View absFull right0 left={180} top0 bottom={0} p={12} center>
+                <View
+                    abs
+                    top={0}
+                    rowVCenter
+                    jSpaceBetween
+                    xx0
+                    h={54}
+                    center
+                    sx={{
+                        borderBottom: '1px solid #e9e9e9'
+                    }}
+                >
+                    <View rowVCenter pl12>
+                        <View textColor="#333" hide={!selectedSource} text={title || ''}></View>
+                    </View>
+                </View>
+                <View absFull top={54} center bgColor="#e6e6e6">
+                    <View
+                        borderBox
+                        relative
+                        center
+                        overflowHidden
+                        sx={{ maxHeight: 400, maxWidth: 600 }}
+                    >
+                        <video
+                            style={{
+                                maxWidth: '100%',
+                                maxHeight: '100%',
+                                display: loading ? 'none' : 'block'
+                            }}
+                            src=""
+                            id={'video_preview'}
+                        ></video>
+                    </View>
+
+                    <View hide={!loading} center wh100p absFull>
+                        <View loading></View>
+                    </View>
+                </View>
+            </View>
+            <View
+                abs
+                left0
+                w={180}
+                top0
+                bottom0
+                px12
+                borderBox
+                overflowYAuto
+                sx={{
+                    borderRight: '1px solid #e9e9e9'
+                }}
+            >
+                <View column w100p aCenter pt12>
+                    {sources.map((source: any) => {
+                        return (
+                            <WinView
+                                currentSourceId={currentSourceId}
+                                onClick={() => {
+                                    console.log('wsPyCtlClient', !!wsPyCtlClient);
+                                    if (wsPyCtlClient) {
+                                        wsPyCtlClient.sendJsonMessage({
+                                            eventType: 'activeWin',
+                                            winName: source.name
+                                        });
+                                    }
+                                    setCurrentSourceId(source.id);
+                                    getScreent(source, 'video_preview');
+                                }}
+                                source={source}
+                                key={source.id}
+                            ></WinView>
+                        );
+                    })}
+                </View>
+            </View>
+        </>
+    );
+}
+export function getVideoId(source: any) {
+    return 'win_' + source.id.replace(/:/g, '_');
+}
+export function WinView({
+    source,
+    currentSourceId,
+    onClick
+}: {
+    currentSourceId: string;
+    source: any;
+    onClick: any;
+}) {
+    return (
+        <View
+            column
+            onClick={onClick}
+            pointer
+            borderBox
+            mb12
+            py={6}
+            px12
+            borderRadius={8}
+            bgColor={currentSourceId === source.id ? 'rgba(0,0,0,0.3)' : undefined}
+            sx={{
+                width: 150,
+                '& .MuiTypography-root ': { color: '#333' }
+            }}
+            // tips={source.name}
+            key={source.id}
+        >
+            <View
+                textFontSize="0.7rem"
+                sx={{ textAlign: 'center' }}
+                text={source.name.substring(0, 20)}
+            ></View>
+            <View borderBox w100p h={80} center relative>
+                <View absFull center>
+                    <video
+                        style={{ maxWidth: '100%', maxHeight: '100%' }}
+                        src=""
+                        id={getVideoId(source)}
+                    ></video>
+                </View>
+                <View absFull center>
+                    <img
+                        style={{ maxWidth: '100%', maxHeight: '100%' }}
+                        src=""
+                        id={getVideoId(source).replace('win', 'pic')}
+                    ></img>
+                </View>
             </View>
         </View>
     );

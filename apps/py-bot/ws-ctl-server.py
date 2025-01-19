@@ -3,103 +3,130 @@ import time
 import sys
 import json
 import logging
-import time
-
-
-
 import asyncio
-from websockets.asyncio.server import serve
+import subprocess
+import websockets
 
-logging.basicConfig(filename="ctl-server.log", filemode='a',
-                    format='%(asctime)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
+if sys.platform == "darwin":
+    from Quartz import CGWindowListCopyWindowInfo, kCGWindowListOptionOnScreenOnly
+elif sys.platform == "win32":
+    import pygetwindow as gw
+    import win32gui
+    import win32con
 
+def activate_window_by_title(title):
+    """Activate a window by title on macOS"""
+    script = f'tell application "System Events" to set frontmost of (processes whose name contains "{title}") to true'
+    subprocess.run(["osascript", "-e", script])
 
-def log(message, level=logging.INFO):
-    """
-    Log a message to the file.
+def get_window_info():
+    """Retrieve a list of active windows."""
+    if sys.platform == "darwin":
+        windows = CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly, 0)
+        return [
+            {
+                "title": win.get("kCGWindowName", "Unknown"),
+                "owner": win.get("kCGWindowOwnerName", "Unknown"),
+                "bounds": {
+                    "x": int(win["kCGWindowBounds"]["X"]),
+                    "y": int(win["kCGWindowBounds"]["Y"]),
+                    "width": int(win["kCGWindowBounds"]["Width"]),
+                    "height": int(win["kCGWindowBounds"]["Height"])
+                } if "kCGWindowBounds" in win else None
+            }
+            for win in windows if win.get("kCGWindowName")
+        ]
+    elif sys.platform == "win32":
+        return [
+            {
+                "title": win.title,
+                "handle": win._hWnd,
+                "bounds": {"x": win.left, "y": win.top, "width": win.width, "height": win.height}
+            }
+            for win in gw.getAllWindows() if win.title
+        ]
+    return []
 
-    :param message: Message to be logged
-    :param level: Level of the log (default is INFO)
-    """
-    print(message)
-    if level == logging.CRITICAL:
-        logging.critical(message)
-    elif level == logging.ERROR:
-        logging.error(message)
-    elif level == logging.WARNING:
-        logging.warning(message)
-    elif level == logging.INFO:
-        logging.info(message)
-    else:
-        logging.debug(message)
+def activate_window(handle):
+    """Activate a window by handle (Windows only)."""
+    win32gui.SetForegroundWindow(handle)
 
-async def echo(websocket):
+async def handle_client(websocket):
     async for message in websocket:
         try:
             msg = json.loads(message)
             event_type = msg.get('eventType')
-            
 
             if event_type == "dragMove":
-                x = msg.get('x')
-                y = msg.get('y')
+                x, y = msg.get('x'), msg.get('y')
                 if x is not None and y is not None:
                     print(f"dragMove event at ({x}, {y})")
-                    # pyautogui.moveTo(x, y)
+
             elif event_type == "rightClick":
-                x = msg.get('x')
-                y = msg.get('y')
+                x, y = msg.get('x'), msg.get('y')
                 if x is not None and y is not None:
                     print(f"RightClick event at ({x}, {y})")
                     pyautogui.moveTo(x, y)
-                    pyautogui.rightClick(x,y)
+                    pyautogui.rightClick()
+
             elif event_type == "click":
-                x = msg.get('x')
-                y = msg.get('y')
+                x, y = msg.get('x'), msg.get('y')
                 if x is not None and y is not None:
                     print(f"Click event at ({x}, {y})")
                     pyautogui.moveTo(x, y)
                     pyautogui.click()
+
             elif event_type == "keyDown":
-                key_event = msg.get('keyEvent', {})
-                key = key_event.get('key')
-                # {"eventType":"keyDown","keyEvent":{"code":"MetaLeft","ctrlKey":false,"shiftKey":false,"which":91,"key":"Meta","keyCode":91,"type":"keydown"}}
+                key = msg.get('keyEvent', {}).get('key')
                 if key:
                     print(f"KeyDown event for key: {key}")
-                    pyautogui.keyDown("ww")  # Simulate a key press
+                    pyautogui.keyDown(key)
 
             elif event_type == "pyautogui":
-                pyAutoGuisScript = msg.get('pyAutoGuisScript')
-                if pyAutoGuisScript:
+                script = msg.get('pyAutoGuisScript')
+                if script:
                     try:
-                        print(f"Executing pyautogui script:\n{pyAutoGuisScript}")
-                        # Evaluate the script safely (avoid using `exec` unless you're certain of the input's safety)
-                        exec(pyAutoGuisScript)
+                        print(f"Executing pyautogui script:\n{script}")
+                        exec(script)
                     except Exception as e:
-                        log(f"Error executing pyautogui script: {e}", level=logging.ERROR)
+                        print(f"Error executing pyautogui script: {e}")
+
+            elif event_type == "activeWin":
+                win_name = msg.get('winName', '').lower()
+                windows = get_window_info()
+                matching_window = next((win for win in windows if win_name in win.get('title', '').lower()), None)
+
+                if matching_window:
+                    print(f"Found Window: {matching_window}")
+                    try:
+                        await websocket.send(json.dumps({
+                            "action": "onWinInfo",
+                            "payload": {"winInfo": matching_window}
+                        }))
+                    except websockets.exceptions.ConnectionClosed as e:
+                        print(f"WebSocket connection closed: {e}")
+
+                    if sys.platform == "win32":
+                        activate_window(matching_window['handle'])
+                    else:
+                        activate_window_by_title(matching_window['title'])
                 else:
-                    print("No script provided for pyautogui event.")
-                
+                    print("No matching window found!")
+
             else:
                 print(f"Unknown eventType: {event_type}")
-        except e:
-            print(e)
-        await websocket.send(message)
 
+        except json.JSONDecodeError:
+            print("Invalid JSON received")
+        except Exception as e:
+            print(f"Error handling message: {e}")
 
 async def main(PORT):
-    log(f"ctl server running at {PORT}")
-    async with serve(echo, "localhost", PORT) as server:
-        await server.serve_forever()
+    print(f"WebSocket server running on ws://localhost:{PORT}")
+    async with websockets.serve(handle_client, "localhost", PORT):
+        await asyncio.Future()  # Run forever
 
 PORT = 6790
 
-if len(sys.argv) > 2:
-    try:
-        PORT = int(sys.argv[2])
-    except ValueError:
-        log("Invalid port number. Using default port "+ str(PORT))
-        
 if __name__ == "__main__":
     asyncio.run(main(PORT))
