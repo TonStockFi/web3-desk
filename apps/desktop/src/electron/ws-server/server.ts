@@ -40,6 +40,10 @@ export enum ErrCodes {
 
 export interface Device {
     deviceId: string;
+    width?:number;
+    height?:number;
+    x?:number;
+    y?:number;
     password: string;
     platform: 'WEB' | 'ADR';
 }
@@ -307,7 +311,7 @@ export class WebSocketServerWrapper {
                         return;
                     }
                     if (data.action === 'registerDevice') {
-                        const { deviceId, platform, password } = data.payload;
+                        const { deviceId, platform, password,width,height,x,y } = data.payload;
                         this.users.forEach((user_, userId_) => {
                             if (
                                 user_.device &&
@@ -319,7 +323,7 @@ export class WebSocketServerWrapper {
                         });
                         this.users.set(userId, {
                             ...this.users.get(userId),
-                            device: { deviceId, password, platform }
+                            device: { deviceId, password, platform,width,height,x,y}
                         });
                         sendMessage(
                             {
@@ -354,15 +358,17 @@ export class WebSocketServerWrapper {
                     }
                     if (data.action === 'registerClient') {
                         const { deviceId, password, platform } = data.payload;
-                        if (checkUser(this.users, ws, deviceId, password)) {
+                        const pairDevice = checkUser(this.users, ws, deviceId, password)
+                        if (pairDevice) {
                             this.users.set(userId, {
                                 ...this.users.get(userId),
                                 client: { deviceId, platform, password }
                             });
+                            const {x,y,width,height} = pairDevice.device;
                             sendMessage(
                                 {
                                     action: 'logged',
-                                    payload: {}
+                                    payload: {x,y,width,height}
                                 },
                                 ws
                             );

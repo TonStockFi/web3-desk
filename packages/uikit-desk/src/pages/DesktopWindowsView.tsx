@@ -190,18 +190,25 @@ export function DesktopWindowsView() {
         }
     }
     const device = Devices.get(currentSourceId);
+    if (currentSourceId) {
+        const d = new DesktopDevices(currentSourceId);
+        if (device?.wsClient) {
+            device?.wsClient.setSources(sources);
+        }
+    }
+
     const RowItem = ({ source }: { source: any }) => {
         const device = new DesktopDevices(source.id);
         const { connected, serviceMediaIsRunning } = device.getState();
         const isConnected = connected === DeviceConnect.Connected;
         const isPushing = serviceMediaIsRunning;
         let borderLeft;
-        let bgColor;
+        let bgcolor;
         if (isConnected) {
             if (!isPushing) {
                 borderLeft = `4px solid green`;
             } else {
-                bgColor = 'green';
+                bgcolor = 'green';
             }
         }
         return (
@@ -210,9 +217,12 @@ export function DesktopWindowsView() {
                 sx={{
                     '& .MuiButtonBase-root ': {
                         borderLeft,
-                        bgColor,
+                        bgcolor,
                         borderRadius: 2,
                         mb: 0.5
+                    },
+                    '& .MuiListItemButton-root.Mui-selected': {
+                        bgcolor
                     },
                     '& .MuiTypography-root': {
                         fontSize: '0.8rem'

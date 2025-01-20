@@ -64,12 +64,16 @@ async def handle_client(websocket):
         try:
             msg = json.loads(message)
             event_type = msg.get('eventType')
-
             if event_type == "dragMove":
                 x, y = msg.get('x'), msg.get('y')
                 if x is not None and y is not None:
                     print(f"dragMove event at ({x}, {y})")
-
+                    # pyautogui.moveTo(x, y)
+            elif event_type == "mouseMove":
+                x, y = msg.get('x'), msg.get('y')
+                if x is not None and y is not None:
+                    print(f"moveTo event at ({x}, {y})")
+                    pyautogui.moveTo(x, y)
             elif event_type == "rightClick":
                 x, y = msg.get('x'), msg.get('y')
                 if x is not None and y is not None:

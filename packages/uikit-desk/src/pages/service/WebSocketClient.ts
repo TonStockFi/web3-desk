@@ -6,6 +6,11 @@ import DesktopDevices, { DeviceConnect } from "./DesktopDevices";
 import WebSocketCtlClient from "./WebSocketCtlClient";
 
 export default class WebSocketClient {
+    sources: { name: string; id: string; display_id: string; }[];
+    setSources(sources: { name: string; id: string; display_id: string; }[]) {
+        
+        this.sources = sources
+    }
     private socket?: WebSocket;
     deviceId: String;
     password: string;
@@ -23,6 +28,7 @@ export default class WebSocketClient {
         password: string,
         passwordHash: string
     ) {
+        this.sources = []
         this.url = url;
         this.deviceId = deviceId;
         this.winId = winId;
@@ -59,7 +65,7 @@ export default class WebSocketClient {
         // Close the peer connection if you want to completely stop WebRTC
         this.peerConnection.close();
     }
-    getWindowSize(screenSource:{display_id:string,name:string}){
+    getWindowSize(screenSource:{id:string,display_id:string,name:string}){
         let { width, height } = window.screen;
         if (!screenSource.display_id) {
             const windows = WebSocketCtlClient.getWindows()
@@ -72,11 +78,13 @@ export default class WebSocketClient {
         return {width, height};
     }
     async handleScreen() {
-        
-        const sources = await new AppAPI().get_sources(['window', 'screen']);
+        let {sources} = this;
+        if(sources.length === 0){
+            sources = await new AppAPI().get_sources(['window', 'screen']);
+        }
         const screenSource = sources.find((row: { id: string }) => row.id === this.winId);
         
-        const {width,height} = this.getWindowSize(screenSource)
+        const {width,height} = await this.getBounds()
         const stream = await navigator.mediaDevices.getUserMedia({
             audio: false,
             video: {
@@ -86,14 +94,16 @@ export default class WebSocketClient {
                         minHeight: height,
                         minFrameRate: 30,
                         chromeMediaSource: 'desktop',
-                        chromeMediaSourceId: screenSource.id
+                        chromeMediaSourceId: screenSource!.id
                     }
                 } as any)
             }
         });
 
         const videoElement = document.getElementById(getVideoId(screenSource)) as HTMLVideoElement;
-
+        if(!this.peerConnection || this.peerConnection.signalingState == "closed"){
+            this.peerConnection = new RTCPeerConnection();
+        }
         videoElement!.srcObject! = stream;
         stream.getTracks().forEach(track => {
             const sender = this.peerConnection.addTrack(track, stream);
@@ -128,6 +138,23 @@ export default class WebSocketClient {
             }
         });
     }
+    async getSource(){
+        let {sources} = this;
+        
+        if(sources.length === 0){
+            sources = await new AppAPI().get_sources(['window', 'screen']);
+        }
+
+        const screenSource = sources.find((row: { id: string }) => row.id === this.winId);
+        return screenSource;
+    }
+    async getBounds(){
+        const screenSource = await this.getSource()
+        const windows = WebSocketCtlClient.getWindows()
+        const win = windows.find(row => row.title === screenSource!.name);
+        const {x,y,width,height} =  win.bounds
+        return {x,y,width,height}
+    }
     async init() {
         const device = new DesktopDevices(this.winId)
         device.setConnected(DeviceConnect.Connecting)
@@ -135,19 +162,29 @@ export default class WebSocketClient {
         ws.binaryType = 'arraybuffer';
         this.socket = ws;
 
-        ws.onopen = () => {
+        ws.onopen = async () => {
             console.log('WebSocket connection established.');
             device.setConnected(DeviceConnect.Connected)
+            const {x,y,width,height}  = await this.getBounds()
             ws.send(
                 JSON.stringify({
                     action: 'registerDevice',
                     payload: {
+                        x,y,width,height,
                         deviceId: this.deviceId,
                         password: this.passwordHash,
                         platform: isMac() ? 'macOS' : 'win'
                     }
                 })
             );
+
+            const t = setInterval(()=>{
+                if(ws.readyState === WebSocket.OPEN){
+                    this.sendJsonMessage({ping:1})
+                }else{
+                    clearInterval(t)
+                }
+            },5000)
         };
 
         ws.onmessage = async event => {
@@ -158,7 +195,8 @@ export default class WebSocketClient {
 
                 switch (eventType) {
                     case 'deviceInfo': {
-                        const deviceInfo = this.getDeviceInfo();
+                        console.log("deviceInfo")
+                        const deviceInfo = await this.getDeviceInfo();
                         this.sendJsonMessage({
                             action: 'deviceMsg',
                             payload: {
@@ -187,6 +225,13 @@ export default class WebSocketClient {
                         return;
                     }
                     default: {
+                        const {x,y} = await this.getBounds()
+                        if(payload.x !== undefined){
+                            payload.x = x + payload.x
+                        }
+                        if(payload.y !== undefined){
+                            payload.y = y + payload.y
+                        }
                         WebSocketCtlClient.sendJsonMessage(payload)
                         return;
                     }
@@ -220,9 +265,15 @@ export default class WebSocketClient {
         };
     }
     async getDeviceInfo() {
-        const sources = await new AppAPI().get_sources(['window', 'screen']);
+
+        let {sources} = this;
+        if(sources.length === 0){
+            sources = await new AppAPI().get_sources(['window', 'screen']);
+        }
+
+        // const sources = await new AppAPI().get_sources(['window', 'screen']);
         const screenSource = sources.find((row: { id: string }) => row.id === this.winId);
-        const {width,height} = this.getWindowSize(screenSource)
+        const {width,height} = this.getWindowSize(screenSource!)
 
         const devicePixelRatio = window.devicePixelRatio;
         const dpi = 96 * devicePixelRatio;
