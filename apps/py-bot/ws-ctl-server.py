@@ -119,7 +119,14 @@ async def handle_client(websocket):
                         if action == 'active':
                             activate_window(matching_window['handle'])
                     else:
-                        activate_window_by_title(matching_window['title'])
+                        # if action == 'move':
+                        #     x = msg.get('x', 0)
+                        #     y = msg.get('y', 0)
+                        #     move_window(matching_window['handle'],x,y)
+                        if action == 'active':
+                            print("active",matching_window)
+                            activate_window_by_title(matching_window['owner'])
+                        
                 else:
                     print("No matching window found!")
             else:

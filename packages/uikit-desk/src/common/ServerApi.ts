@@ -1,6 +1,5 @@
 import { md5 } from '@web3-explorer/lib-crypto/dist/utils';
 import { WS_URL } from '../constant';
-import { isDesktop } from './utils';
 
 export default class ServerApi {
     static url(path: string): any {
@@ -8,7 +7,7 @@ export default class ServerApi {
     }
 
     static getServerApi(): any {
-        return localStorage.getItem('client-serverApi') || (isDesktop() ? WS_URL:"");
+        return WS_URL;
     }
 
     static setServerApi(api: string): any {

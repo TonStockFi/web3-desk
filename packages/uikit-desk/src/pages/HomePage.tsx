@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 import { View } from '@web3-explorer/uikit-view';
 import AppAPI from '../common/AppApi';
 import ServerApi from '../common/ServerApi';
-import { formatNumber, isDesktop, isMac } from '../common/utils';
+import { formatNumber, isDesktop } from '../common/utils';
 import BottomNavigationView from '../components/BottomNavigationView';
 import ConfirmationDialog from '../components/ConfirmationDialog';
 import SwerverManager from '../components/SwerverManager';
@@ -116,6 +116,7 @@ export default function HomePage({
                     alignItems: 'center'
                 }}
             >
+                111
                 {tabId === 'link' && (
                     <>
                         <Box
@@ -166,16 +167,8 @@ export default function HomePage({
                             </View>
                             <View rowVCenter center mt12>
                                 <View
-                                    hide={!isMac()}
-                                    mr12
                                     mt12
-                                    buttonOutlined={'隐私与安全'}
-                                    onClick={() => {
-                                        new AppAPI().open_screen_recording_settings();
-                                    }}
-                                ></View>
-                                <View
-                                    mt12
+                                    hide={isDesktop()}
                                     buttonOutlined={'使用文档'}
                                     onClick={() => {
                                         new AppAPI().open_url(
@@ -184,9 +177,6 @@ export default function HomePage({
                                     }}
                                 ></View>
                             </View>
-                            {/* <View mt12 hide={!isDesktop()}>
-                                <PythonPathView />
-                            </View> */}
 
                             <ConfirmationDialog
                                 {...{
@@ -269,13 +259,12 @@ export default function HomePage({
                         </Box>
                     </>
                 )}
-
                 {tabId === 'server' && (
                     <Box sx={{ maxWidth: 720, pt: 2 }}>
                         <SwerverManager />
                     </Box>
                 )}
-                {0 && (
+                {false && (
                     <Box sx={{ position: 'fixed', bottom: 0, left: 0, right: 0 }}>
                         <BottomNavigationView tabId={tabId} setTabId={setTabId} />
                     </Box>

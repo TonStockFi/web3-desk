@@ -78,3 +78,107 @@ export function isMac() {
     const userAgent = navigator.userAgent.toLowerCase();
     return userAgent.includes("mac");
 }
+
+export function waitForResult(
+    cb: () => any | Promise<any>,
+    timeout: number = -1,
+    interval: number = 1000
+): Promise<any | null> {
+    const startTime = Date.now();
+
+    return new Promise(resolve => {
+        const checkReply = async () => {
+            try {
+                const res = await Promise.resolve(cb()); // Ensure cb result is a Promise
+                if (res) {
+                    resolve(res);
+                    return;
+                }
+
+                // Check for timeout
+                if (timeout > -1 && Date.now() - startTime > timeout) {
+                    resolve(false);
+                    return;
+                }
+
+                // Retry after interval
+                setTimeout(checkReply, interval);
+            } catch (error) {
+                console.error('Error in waitForResult callback:', error);
+                resolve(false); // Resolve with null on error
+            }
+        };
+
+        checkReply();
+    });
+}
+
+
+
+export function getVedeoSize(
+    viewSize: { width: number; height: number },
+    realSize: { width: number; height: number },
+    gap: number
+) {
+    let width = realSize.width;
+    let height = realSize.height;
+
+    // Calculate the maximum available space
+    let viewWidth = viewSize.width - gap;
+    let viewHeight = viewSize.height - gap;
+
+    // If the real size fits within the view size, return real size
+    if (width <= viewWidth && height <= viewHeight) {
+        return { width, height };
+    }
+
+    // Maintain aspect ratio while scaling down
+    const widthRatio = viewWidth / width;
+    const heightRatio = viewHeight / height;
+    const scaleRatio = Math.min(widthRatio, heightRatio); // Scale to fit
+
+    return {
+        width: Math.round(width * scaleRatio),
+        height: Math.round(height * scaleRatio)
+    };
+}
+
+
+export function sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export const captureFrame = (videoElement: HTMLVideoElement) => {
+    if (!videoElement) return null;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = videoElement.videoWidth;
+    canvas.height = videoElement.videoHeight;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+
+    // Draw the current video frame onto the canvas
+    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+    // Convert the canvas to a data URL (base64 image)
+    const imageData = canvas.toDataURL('image/png');
+
+    // console.log('Captured Image:', imageData);
+    return imageData;
+};
+
+export const destroyStream = (stream: MediaStream) => {
+    stream.getTracks().forEach(track => track.stop());
+};
+
+export function getVideoId(source: any) {
+    return 'win_' + source.id.replace(/:/g, '_');
+}
+
+export function updateApp() {
+    window.dispatchEvent(new CustomEvent("updateApp",{detail:{}}))
+}
+
+
+

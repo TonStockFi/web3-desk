@@ -33,7 +33,10 @@ export default class AppAPI {
             mediaIsStart: AppAPI.client_is_ready,
             isWsConnected: AppAPI.isWsConnected,
             isWsReady: AppAPI.isWsReady,
-            inputIsOpen: AppAPI.serviceInputIsOpen
+            inputIsOpen: AppAPI.serviceInputIsOpen,
+            serviceMediaIsRunning:AppAPI.client_is_ready, 
+            connected:AppAPI.isWsReady?1:0, 
+            serviceInputIsOpen:AppAPI.serviceInputIsOpen
         };
     }
     check_service() {

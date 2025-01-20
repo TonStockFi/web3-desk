@@ -1,6 +1,6 @@
 import { Snackbar } from '@mui/material';
 import { md5 } from '@web3-explorer/lib-crypto/dist/utils';
-import { useLocalStorageState, useTimeoutLoop } from '@web3-explorer/utils';
+import { useLocalStorageState } from '@web3-explorer/utils';
 import * as React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import AppAPI from '../common/AppApi';
@@ -8,13 +8,18 @@ import ServerApi from '../common/ServerApi';
 import { generateDeviceId, generateRandomPassword, isDesktop } from '../common/utils';
 import DesktopPage from './DesktopPage';
 import HomePage from './HomePage';
+import { ScreenShareProvider } from './ScreenShareProvider';
 
 export const KEY_DEVICE_ID = 'device_device_id_1';
-const KEY_PASSWORD = 'device_password';
+export const KEY_PASSWORD = 'device_password';
 
 export default function App() {
     if (isDesktop()) {
-        return <DesktopPage />;
+        return (
+            <ScreenShareProvider>
+                <DesktopPage />
+            </ScreenShareProvider>
+        );
     } else {
         return <AppInner />;
     }
@@ -60,35 +65,13 @@ export function AppInner() {
             setDeviceId(deviceId);
         }
     }, [deviceId]);
-    const handleState = async () => {
-        const res = await new AppAPI().check_state();
-        const {
-            accessibilityStatus,
-            screenRecordingIsAuthed,
-            serviceInputIsOpen,
-            screenRecordingStatus
-        } = res || {};
-        AppAPI.serviceInputIsOpen = !!serviceInputIsOpen;
-
-        AppAPI.screenRecordingStatus = screenRecordingStatus;
-        AppAPI.accessibilityStatus = accessibilityStatus;
-        AppAPI.screenRecordingIsAuthed = screenRecordingIsAuthed;
-    };
 
     const on_state_changed = async () => {
-        await handleState();
         const res = await appAPI.check_service();
         const deviceInfo = JSON.parse(res);
-        // console.log({ deviceInfo });
-        const { mediaIsStart, screenRecordingIsAuthed, isWsConnected, isWsReady, inputIsOpen } =
-            deviceInfo;
-        setScreenRecordingIsAuthed(!!screenRecordingIsAuthed);
+        const { mediaIsStart, isWsConnected, isWsReady, inputIsOpen } = deviceInfo;
         setServiceInputIsOpen(inputIsOpen);
         setServiceMediaIsRunning(mediaIsStart);
-        const password = localStorage.getItem(KEY_PASSWORD);
-        const deviceId = localStorage.getItem(KEY_DEVICE_ID);
-        // console.log('on_state_changed', res, deviceId);
-
         if (isWsReady) {
             setConnected(1);
         } else {
@@ -97,7 +80,6 @@ export function AppInner() {
             }
         }
 
-        let passwordHash;
         if (mediaIsStart) {
             setConfirming(false);
             setState({
@@ -105,10 +87,6 @@ export function AppInner() {
                 serviceInputDialogShow: false,
                 serviceMediaStopDialogShow: false
             });
-
-            if (password && deviceId) {
-                passwordHash = md5(password);
-            }
         }
     };
     useEffect(() => {
@@ -183,31 +161,8 @@ export function AppInner() {
 
     const [snackbar, setSnackbar] = useState('');
 
-    useTimeoutLoop(async () => {
-        if (isDesktop()) {
-            handleState();
-            const res = await new AppAPI().check_service();
-            const { isWsConnected } = JSON.parse(res);
-            // console.log('check_service', res);
-            if (isWsConnected) {
-                setConnected(1);
-            }
-            if (!state.serviceMediaStopDialogShow) {
-                on_state_changed();
-            }
-        }
-    }, 2000);
     return (
         <>
-            {/* <View
-                hide={!isDesktop()}
-                appRegionDrag
-                zIdx={1000}
-                position="fixed"
-                top0
-                xx0
-                h={44}
-            ></View> */}
             <HomePage
                 screenRecordingIsAuthed={screenRecordingIsAuthed}
                 confirming={confirming}
