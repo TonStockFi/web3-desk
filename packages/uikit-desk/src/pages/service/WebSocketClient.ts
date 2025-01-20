@@ -150,7 +150,11 @@ export default class WebSocketClient {
     }
     async getBounds(){
         const screenSource = await this.getSource()
+        if(screenSource?.display_id){
+            return {x:0,y:0,width:window.screen.width,height:window.screen.height}
+        }
         const windows = WebSocketCtlClient.getWindows()
+        
         const win = windows.find(row => row.title === screenSource!.name);
         const {x,y,width,height} =  win.bounds
         return {x,y,width,height}
