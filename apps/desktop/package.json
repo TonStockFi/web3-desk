@@ -1,7 +1,7 @@
 {
     "name": "@web3-desk/desktop",
     "license": "Apache-2.0",
-    "version": "1.0.22",
+    "version": "1.0.23",
     "description": "Your desktop web3 desk",
     "main": ".webpack/main",
     "repository": {
