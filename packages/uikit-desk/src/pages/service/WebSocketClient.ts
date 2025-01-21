@@ -177,7 +177,7 @@ export default class WebSocketClient {
                         x,y,width,height,
                         deviceId: this.deviceId,
                         password: this.passwordHash,
-                        platform: isMac() ? 'macOS' : 'win'
+                        platform: isMac() ? 'darwin' : 'win32'
                     }
                 })
             );

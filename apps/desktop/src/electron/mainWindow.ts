@@ -32,6 +32,7 @@ let authStatus: null | {
     serviceInputIsOpen: boolean;
 } = null;
 
+const AppInfo:Map<string,{thumbnail:string,appIcon:string}> = new Map()
 setInterval(() => {
     if (isWin) {
         authStatus = {
@@ -159,12 +160,28 @@ export abstract class MainWindow {
                     this.openScreenRecordingSettings();
                     return true;
                 }
-
+                
+                case 'get_app_info': {
+                    let { id } = payload;
+                    return AppInfo.get(id)
+                }
                 case 'get_sources': {
                     let { types } = payload;
-                    return await desktopCapturer.getSources({
-                        types: types || ['window', 'screen']
+                    const sources=  await desktopCapturer.getSources({
+                        types: types || ['window', 'screen'],
+                        fetchWindowIcons:true,
                     });
+                    sources.map(row=>{
+                        const thumbnail = row.thumbnail.toDataURL()
+                        let appIcon = "";
+                        if(row.appIcon){
+                            appIcon = row.appIcon.toDataURL()
+                        }
+                        AppInfo.set(row.id,{
+                            thumbnail,appIcon
+                        })
+                    })
+                    return sources
                 }
                 case 'stop_server': {
                     return WebSocketServerWrapper.stopServer();

@@ -83,14 +83,7 @@ export default function DesktopShareView({
     };
     return (
         <View absFull px={12} borderBox key={updateAt}>
-            <View abs top={12} right={12}>
-                <View drawer={{}} buttonOutlined={'二维码'}>
-                    <View w={320} h100p relative>
-                        <QrCodeView text={`${deviceId}:${password}`}></QrCodeView>
-                    </View>
-                </View>
-            </View>
-            <View pt={48}>
+            <View pt={0}>
                 <View mb12>
                     <DeviceCard
                         handleMediaService={handleMediaService}

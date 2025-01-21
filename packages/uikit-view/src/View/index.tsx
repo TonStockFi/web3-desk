@@ -11,8 +11,10 @@ import Drawer, { DrawerProps } from '@web3-explorer/uikit-mui/dist/mui/Drawer';
 import type { IconButtonProps } from '@web3-explorer/uikit-mui/dist/mui/IconButton';
 import IconButton from '@web3-explorer/uikit-mui/dist/mui/IconButton';
 import { getIcon } from '@web3-explorer/uikit-mui/dist/mui/Icons';
+import List from '@web3-explorer/uikit-mui/dist/mui/List';
 import ListItem from '@web3-explorer/uikit-mui/dist/mui/ListItem';
 import ListItemButton from '@web3-explorer/uikit-mui/dist/mui/ListItemButton';
+
 import ListItemIcon from '@web3-explorer/uikit-mui/dist/mui/ListItemIcon';
 import ListItemText from '@web3-explorer/uikit-mui/dist/mui/ListItemText';
 import MenuItem from '@web3-explorer/uikit-mui/dist/mui/MenuItem';
@@ -346,6 +348,12 @@ export const View = React.forwardRef<HTMLElement, ViewProps>((props, ref) => {
 
         // @ts-ignore
         return <MenuItem {...p} {...menuItemProps}></MenuItem>;
+    }
+    if (list) {
+        const p = handleProps(props_);
+
+        // @ts-ignore
+        return <List {...p}></List>;
     }
     if (listItemText) {
         const { children, onClick, ...p1 } = handleProps(props_);
