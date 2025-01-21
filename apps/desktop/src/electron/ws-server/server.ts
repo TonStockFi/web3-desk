@@ -364,11 +364,11 @@ export class WebSocketServerWrapper {
                                 ...this.users.get(userId),
                                 client: { deviceId, platform, password }
                             });
-                            const {x,y,width,height,platform} = pairDevice.device;
+                            const {x,y,width,height} = pairDevice.device;
                             sendMessage(
                                 {
                                     action: 'logged',
-                                    payload: {x,y,width,height,platform}
+                                    payload: {x,y,width,height,platform: pairDevice.device}
                                 },
                                 ws
                             );
