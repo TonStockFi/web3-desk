@@ -365,10 +365,11 @@ export class WebSocketServerWrapper {
                                 client: { deviceId, platform, password }
                             });
                             const {x,y,width,height} = pairDevice.device;
+                            
                             sendMessage(
                                 {
                                     action: 'logged',
-                                    payload: {x,y,width,height,platform: pairDevice.device}
+                                    payload: {x,y,width,height,platform: pairDevice.device.platform}
                                 },
                                 ws
                             );

@@ -1,4 +1,4 @@
-cd /root/web3-desk/apps/desktop/docker/ws-server
+cd /root/projects/web3- /apps/desktop/docker/ws-server
 git pull origin main 
 cp ../../src/electron/ws-server/server.ts ./
 cp ../../src/electron/ws-server/BufferProcessor.ts ./
