@@ -1,4 +1,4 @@
-FROM alfg/nginx-rtmp:latest
+FROM nginx:latest
 
 # Expose  HTTP ports
 EXPOSE 80
