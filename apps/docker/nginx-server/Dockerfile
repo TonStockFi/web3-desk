@@ -5,7 +5,7 @@ FROM nginx:alpine
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copy your web app's static files to the appropriate directory inside the container
-COPY /path/to/your/static/files /usr/share/nginx/html/
+COPY ./data/ /usr/share/nginx/html/
 
 # Expose port 80 for HTTP access
 EXPOSE 80
