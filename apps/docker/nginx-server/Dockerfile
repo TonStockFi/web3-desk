@@ -1,14 +1,14 @@
-# Base image with Nginx and RTMP module
-FROM nginx
+# Use official NGINX image as a base
+FROM nginx:alpine
 
-# Expose  HTTP ports
-EXPOSE 80 1935
-
-RUN mkdir -p /var/log/nginx && chmod 755 /var/log/nginx
-
-# Copy custom nginx config (optional)
+# Copy your custom nginx.conf file to the NGINX configuration directory
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Copy your web app's static files to the appropriate directory inside the container
+COPY /path/to/your/static/files /usr/share/nginx/html/
 
+# Expose port 80 for HTTP access
+EXPOSE 80
+
+# Start NGINX in the foreground
+CMD ["nginx", "-g", "daemon off;"]
