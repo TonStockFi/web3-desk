@@ -10,13 +10,13 @@ docker build -t nginx-server .
 
 # docker run --network web3r_network \
 #     -d \
-#     -v $(pwd)/data:/usr/local/nginx/html \
+#     -v $(pwd)/data:/usr/share/nginx/html/ \
 #     --name nginx-server \
 #     -p 80:80 -p 1935:1935 \
 #     nginx-server
 
 docker run --network web3r_network \
-    -v $(pwd)/data:/usr/local/nginx/html \
+    -v $(pwd)/data:/usr/share/nginx/html/ \
     --name nginx-server \
     -p 80:80 -p 1935:1935 \
     nginx-server
