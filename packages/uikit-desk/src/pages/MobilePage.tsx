@@ -96,6 +96,9 @@ export function MobilePagInner() {
         onUpdateAt();
     };
     useEffect(() => {
+        if (!AppAPI.isAdr()) {
+            return;
+        }
         function updateApp() {
             onUpdateAt();
         }

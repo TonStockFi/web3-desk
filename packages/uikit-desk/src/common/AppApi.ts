@@ -3,6 +3,7 @@ import { isDesktop } from "./utils";
 
 export default class AppAPI {
     private api: any;
+
     constructor() {
         if(isDesktop()){
             //@ts-ignore
@@ -12,7 +13,10 @@ export default class AppAPI {
             this.api = window.__AndroidAPI
         }
     }
-
+    static isAdr(){
+        //@ts-ignore
+        return !!window.__AndroidAPI
+    }
     webview_is_ready() {
         return this.api.webview_is_ready();
     }

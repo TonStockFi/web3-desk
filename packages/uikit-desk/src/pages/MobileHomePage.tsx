@@ -252,7 +252,7 @@ export default function MobileHomePage({
                                 }}
                             />
                         </Box>
-                        <View>
+                        <View hide>
                             <DecisionView />
                         </View>
                     </>
