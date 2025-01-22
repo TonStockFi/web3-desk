@@ -1,5 +1,5 @@
 # Base image with Nginx and RTMP module
-FROM alfg/nginx-rtmp:latest
+FROM nginx
 
 # Expose  HTTP ports
 EXPOSE 80 1935
