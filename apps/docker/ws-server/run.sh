@@ -1,8 +1,8 @@
 cd /root/web3-desk/apps/docker/ws-server
 git pull origin main 
-cp ../desktop/src/electron/ws-server/server.ts ./
-cp ../desktop//src/electron/ws-server/BufferProcessor.ts ./
-# cp ../desktop//src/electron/ws-server/main.ts ./
+cp ../../desktop/src/electron/ws-server/server.ts ./
+cp ../../desktop//src/electron/ws-server/BufferProcessor.ts ./
+# cp ../../desktop//src/electron/ws-server/main.ts ./
 
 
 docker rm -f ctl-server
