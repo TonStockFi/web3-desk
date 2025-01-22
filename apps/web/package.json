@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "deploy_android":"cp -a ./dist/ ../android/app/src/main/assets && yarn deploy_opencv",
+    "deploy_opencv":"cp -a ../desktop/public/opencv.js ../android/app/src/main/assets/",
     "lint": "eslint .",
     "preview": "vite preview",
     "deploy": "wrangler pages deploy dist --project-name web3-desk --commit-dirty=true"

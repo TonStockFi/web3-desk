@@ -41,13 +41,13 @@ export default function DecisionView() {
 
     return (
         <View center column overflowYAuto bgColor="#3b3b3b">
-            <View w={180} h={400} center mb12>
+            <View w={180} h={400} center mb12 column>
                 <img
                     ref={imgRef}
                     onLoad={() => {
                         const wsClient = device.getInfo().wsClient as WebSocketAndroidClient;
-                        const arrayBuffer = dataURIToArrayBuffer(screenImage);
-                        wsClient && wsClient.sendChannalScreenMessage(arrayBuffer);
+                        // const arrayBuffer = dataURIToArrayBuffer(screenImage);
+                        wsClient && wsClient.sendChannalScreenMessage(screenImage);
                     }}
                     src={screenImage}
                     style={{ width: '100%', height: '100%' }}

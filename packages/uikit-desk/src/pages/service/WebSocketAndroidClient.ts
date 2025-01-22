@@ -31,7 +31,9 @@ export default class WebSocketAndroidClient {
         this.winId = winId;
         this.password = password;
         this.passwordHash = passwordHash;
-        this.peerConnection = new RTCPeerConnection();
+        this.peerConnection = new RTCPeerConnection({
+            iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+        });
         this.init();
     }
     
@@ -42,7 +44,7 @@ export default class WebSocketAndroidClient {
     getPassword() {
         return this.password;
     }
-    sendChannalScreenMessage(message:ArrayBuffer) {
+    sendChannalScreenMessage(message:string) {
         const {dataChannel_screen} = this;
         if (dataChannel_screen && dataChannel_screen.readyState === "open") {
             dataChannel_screen.send(message);
@@ -50,8 +52,11 @@ export default class WebSocketAndroidClient {
     }
     async handleWebrtc() {
         if(!this.peerConnection || this.peerConnection.signalingState == "closed"){
-            this.peerConnection = new RTCPeerConnection();
+            this.peerConnection = new RTCPeerConnection({iceServers: [{ urls: "stun:stun.l.google.com:19302" }]});
         }
+        this.peerConnection.oniceconnectionstatechange = () => {
+            console.log("ICE Connection State:", this.peerConnection.iceConnectionState);
+        };
         this.dataChannel_control = this.peerConnection.createDataChannel("control");
 
         this.dataChannel_control.onopen = () => {
@@ -70,21 +75,13 @@ export default class WebSocketAndroidClient {
         };
         this.dataChannel_chat.onmessage = (e) => console.log("Received:", e.data);
 
-
         this.dataChannel_screen = this.peerConnection.createDataChannel("screen");
 
-        this.dataChannel_screen.onopen = () => {};
+        this.dataChannel_screen.onopen = () => {
+
+        };
         this.dataChannel_screen.onmessage = (e) => console.log("Received:", e.data);
 
-        // stream.getTracks().forEach(track => {
-        //     const sender = this.peerConnection.addTrack(track, stream);
-        //     const params = sender.getParameters();
-        //     if (!params.encodings) params.encodings = [{}];
-
-        //     params.encodings[0].maxBitrate = 5_000_000; // 5Mbps
-        //     params.encodings[0].maxFramerate = 30;
-        //     sender.setParameters(params);
-        // });
         this.peerConnection.onicecandidate = event => {
             if (event.candidate) {
                 // console.log(">>>>>>>>>>> candidate send ",JSON.stringify(event.candidate))
