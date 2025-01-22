@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { default as AppAPI } from '../common/AppApi';
 
 import { md5 } from '@web3-explorer/lib-crypto/dist/utils';
-import { waitForResult } from '../common/utils';
+import { generateRandomPassword, waitForResult } from '../common/utils';
 import { WS_URL } from '../constant';
 import { WsCloseCode } from '../types';
 import { DesktopWindowsView } from './DesktopWindowsView';
@@ -13,15 +13,17 @@ import { useScreenShareContext } from './ScreenShareProvider';
 import DesktopDevices, {
     DeviceConnect,
     Devices,
-    loadDevices,
-    saveDevices
+    saveDevices,
+    updateDevices
 } from './service/DesktopDevices';
 import WebSocketClient from './service/WebSocketClient';
 import WebSocketCtlClient from './service/WebSocketCtlClient';
 
 export async function initClients(winId: string) {
     const device = Devices.get(winId)!;
-    let { wsClient, deviceId, password } = device;
+    let { wsClient, deviceId } = device;
+    const password = generateRandomPassword();
+    updateDevices(winId, { password });
     const passwordHash = md5(password!);
     const apiUrl = WS_URL;
     try {
@@ -52,14 +54,6 @@ export async function initClients(winId: string) {
 
 export default function DesktopPage() {
     const { onUpdateAt } = useScreenShareContext();
-    useEffect(() => {
-        loadDevices();
-        const loading = document.querySelector('#__loading');
-        //@ts-ignore
-        document.body.style.appRegion = 'unset';
-        //@ts-ignore
-        if (loading) loading.style.display = 'none';
-    }, []);
     useTimeoutLoop(async () => {
         WebSocketCtlClient.sendJsonMessage({
             eventType: 'getWindows'
@@ -84,7 +78,6 @@ export default function DesktopPage() {
 
         async function stop_service(e: any) {
             const { winId } = e.detail;
-            // const password = generateRandomPassword();
             // new DesktopDevices(winId).updateDesktopDevice({ password });
             saveDevices();
             const { wsClient } = Devices.get(winId)!;

@@ -3,7 +3,6 @@ import PublicIcon from '@mui/icons-material/Public';
 import BottomNavigation from '@web3-explorer/uikit-mui/dist/mui/BottomNavigation';
 import BottomNavigationAction from '@web3-explorer/uikit-mui/dist/mui/BottomNavigationAction';
 import Box from '@web3-explorer/uikit-mui/dist/mui/Box';
-import { isDesktop } from '../common/utils';
 
 export default function BottomNavigationView({
     tabId,
@@ -12,6 +11,7 @@ export default function BottomNavigationView({
     tabId: string;
     setTabId: any;
 }) {
+    return null;
     return (
         <Box
             sx={{
@@ -30,9 +30,8 @@ export default function BottomNavigationView({
                 }}
             >
                 <BottomNavigationAction value={'link'} label="推送端" icon={<LinkIcon />} />
-                {isDesktop() && (
-                    <BottomNavigationAction value={'server'} label="服务端" icon={<PublicIcon />} />
-                )}
+                <BottomNavigationAction value={'decision'} label="机器决策" icon={<PublicIcon />} />
+
                 {/* <BottomNavigationAction value={'setting'} label="设置" icon={<SettingsIcon />} /> */}
             </BottomNavigation>
         </Box>

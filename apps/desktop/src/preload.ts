@@ -6,7 +6,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('backgroundApi', {
     get_app_info:(id: string)=>ipcRenderer.invoke('message', {action:"get_app_info",payload:{id}}),
-    webview_is_ready:(apiUrl: string, deviceId: string)=>ipcRenderer.invoke('message', {action:"webview_is_ready",payload:{apiUrl,deviceId}}),
+    webview_is_ready:()=>ipcRenderer.invoke('message', {action:"webview_is_ready",payload:{}}),
     start_server:(port:number)=>ipcRenderer.invoke('message', {action:"start_server",payload:{port}}),
     stop_server:()=>ipcRenderer.invoke('message', {action:"stop_server",payload:{}}),
     server_is_ready:()=>ipcRenderer.invoke('message', {action:"server_is_ready",payload:{}}),
@@ -21,7 +21,7 @@ contextBridge.exposeInMainWorld('backgroundApi', {
     stop_service:()=>ipcRenderer.invoke('message', {action:"stop_service",payload:{}}),
     start_scanner:()=>ipcRenderer.invoke('message', {action:"start_scanner",payload:{}}),
     show_toast:(message:string)=>ipcRenderer.invoke('message', {action:"show_toast",payload:{message}}),
-    init_service:(apiUrl: string, password: string, passwordHash: string)=>ipcRenderer.invoke('message', {action:"init_service",payload:{apiUrl,password,passwordHash}}),
+    init_service:()=>ipcRenderer.invoke('message', {action:"init_service",payload:{}}),
     start_action:(action: string)=>ipcRenderer.invoke('message', {action:"start_action",payload:{action}}),
     open_screen_recording_settings:(action: string)=>ipcRenderer.invoke('message', {action:"open_screen_recording_settings",payload:{action}}),
     get_display_bounds:(display_id: string)=>ipcRenderer.invoke('message', {action:"get_display_bounds",payload:{display_id}}),

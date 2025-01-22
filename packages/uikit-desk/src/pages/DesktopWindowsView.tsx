@@ -19,9 +19,11 @@ import { useScreenShareContext } from './ScreenShareProvider';
 import DesktopDevices, {
     DeviceConnect,
     Devices,
+    loadDevices,
     saveDevices,
     updateDevices
 } from './service/DesktopDevices';
+import WebSocketClient from './service/WebSocketClient';
 import WebSocketCtlClient from './service/WebSocketCtlClient';
 
 export function DesktopWindowsView() {
@@ -57,21 +59,21 @@ export function DesktopWindowsView() {
             return;
         }
         const name = screenSource1.name;
-        const device = Devices.get(screenSource1.id);
+        loadDevices();
+        let device = Devices.get(screenSource1.id);
         let password, deviceId;
         if (!device) {
             password = generateRandomPassword();
             deviceId = generateDeviceId();
-        } else {
-            password = device.password;
-            deviceId = device.deviceId;
+
+            updateDevices(screenSource1.id, {
+                deviceId,
+                password,
+                winId: screenSource1.id
+            });
+            saveDevices();
+            device = Devices.get(screenSource1.id);
         }
-        updateDevices(screenSource1.id, {
-            deviceId,
-            password,
-            winId: screenSource1.id
-        });
-        saveDevices();
 
         if (!isMac() && !screenSource1.display_id) {
             const win = WebSocketCtlClient.getWindows().find(win => win.title === name);
@@ -121,19 +123,24 @@ export function DesktopWindowsView() {
 
     useEffect(() => {
         (async () => {
-            waitForResult(() => {
+            setLoading(true);
+            await waitForResult(() => {
                 return WebSocketCtlClient.getWsPyCtlClient();
-            });
+            }, 500);
+            await waitForResult(() => {
+                return WebSocketCtlClient.getWindows().length > 0;
+            }, 100);
             WebSocketCtlClient.sendJsonMessage({
                 eventType: 'getWindows'
             });
-            await sleep(1000);
+            await sleep(100);
             const sources = await new AppAPI().get_sources(['window', 'screen']);
             console.log(sources);
             const rows = filterWindows(sources);
             setSources(rows);
+            setLoading(false);
         })();
-    }, [viewSize]);
+    }, []);
 
     const selectedSource = sources.find(
         (row: { id: string; name: string }) => row.id === currentSourceId
@@ -164,8 +171,9 @@ export function DesktopWindowsView() {
     }
     const device = Devices.get(currentSourceId);
     if (currentSourceId) {
-        if (device?.wsClient) {
-            device?.wsClient.setSources(sources);
+        const wsClient = device?.wsClient as WebSocketClient;
+        if (wsClient) {
+            wsClient.setSources(sources);
         }
     }
 
@@ -201,7 +209,7 @@ export function DesktopWindowsView() {
         }, 2000);
         return (
             <View
-                w={220}
+                w={200}
                 mb12
                 mr12
                 sx={{
@@ -229,7 +237,7 @@ export function DesktopWindowsView() {
                 listSelected={source.id === currentSourceId}
                 listItemText={title}
                 listItemRight={
-                    <View center w={200} h={120}>
+                    <View center w={130} h={80}>
                         <video
                             style={{
                                 maxWidth: '100%',
@@ -256,6 +264,13 @@ export function DesktopWindowsView() {
         );
     };
     const rightSide = 320;
+    if (loading && !currentSourceId) {
+        return (
+            <View absFull center>
+                <View loading></View>
+            </View>
+        );
+    }
     return (
         <>
             <View

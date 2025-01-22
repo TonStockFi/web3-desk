@@ -1,4 +1,4 @@
-export function generateRandomPassword( length: number = 6): string {
+export function generateRandomPassword( length: number = 7): string {
     let chars = 'abcdefghijklmnpqrstuvwxyz123456789';
     
     let password = '';
@@ -14,7 +14,7 @@ export function formatNumber(num: number): string {
 }
 
 export function generateDeviceId(): string {
-    let groups = [1, 3, 3, 3];
+    let groups = [1, 3, 3];
  
     let deviceId = '';
 

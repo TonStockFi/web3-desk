@@ -1,1 +1,1 @@
-export { default as MobileDeviceApp } from './pages/MobileDeviceApp';
+export { default as App } from './pages/App';

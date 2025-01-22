@@ -123,8 +123,19 @@ export abstract class MainWindow {
         });
         
 
-        const url = isDev ? 'http://localhost:5173' : 'https://web3-desk.web3r.site';
+        let url = isDev ? 'http://localhost:5173' : 'https://web3-desk.web3r.site';
         this.mainWindow.loadURL(url);
+
+        // this.mainWindow.webContents.session.setProxy({
+        //     proxyBypassRules: 'localhost,127.0.0.1,::1,192.168.*',
+        //     proxyRules: `socks5://ip:1080`
+        // });
+
+        // this.mainWindow.webContents.on('login', (event, request, authInfo, cb) => {
+        //     console.log(authInfo)
+        //     event.preventDefault()
+        //     cb("user1", "password123");
+        //   })
         this.mainWindow.show();
         
         

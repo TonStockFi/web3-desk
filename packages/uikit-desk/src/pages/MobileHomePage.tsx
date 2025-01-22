@@ -4,106 +4,79 @@ import * as React from 'react';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import Typography from '@mui/material/Typography';
 import { View } from '@web3-explorer/uikit-view';
+import { useLocalStorageState } from '@web3-explorer/utils';
 import AppAPI from '../common/AppApi';
-import ServerApi from '../common/ServerApi';
-import { formatNumber, isDesktop } from '../common/utils';
-import BottomNavigationView from '../components/BottomNavigationView';
+import { isDesktop, waitForResult } from '../common/utils';
 import ConfirmationDialog from '../components/ConfirmationDialog';
-import SwerverManager from '../components/SwerverManager';
+import DecisionView from '../components/DecisionView';
+import { Mobile_Device_Id } from '../constant';
+import { WsCloseCode } from '../types';
 import DeviceCard from '../view/Device/DeviceCard';
 import PermissionsCard from '../view/Device/PermissionsCard';
 import ServerCard from '../view/Device/ServerCard';
-import ServiceStartCard from '../view/Device/ServiceStartCard';
+import { useScreenShareContext } from './ScreenShareProvider';
+import DesktopDevices, { DeviceConnect, Devices } from './service/DesktopDevices';
 
-export default function HomePage({
-    skipDesktop,
+export default function MobileHomePage({
     confirming,
-    appAPI,
-    onChangeApi,
-    setState,
-    state,
-    connected,
-    deviceId,
-    password,
-    screenRecordingIsAuthed,
-    // onRefreshPassword,
-    serviceInputIsOpen,
-    serviceMediaIsRunning,
+    setDialogState,
+    dialogState,
     onConfirmInitService
 }: {
-    skipDesktop?: boolean;
-    screenRecordingIsAuthed: boolean;
     confirming: boolean;
     onChangeApi: any;
-    connected: number;
-    setState: any;
-    state: any;
+    setDialogState: any;
+    dialogState: any;
     onConfirmInitService: any;
-    deviceId: string;
-    // onRefreshPassword: any;
-    password: string;
-    appAPI: AppAPI;
-    serviceInputIsOpen: boolean;
-    serviceMediaIsRunning: boolean;
 }) {
-    const [tabId, setTabId] = React.useState('link');
+    const [tabId, setTabId] = useLocalStorageState('tabId', 'link');
+    const { updateAt, onUpdateAt } = useScreenShareContext();
 
-    const handleInputService = React.useCallback(
-        (event: any) => {
-            event.stopPropagation();
-            event.preventDefault();
-            if (!serviceInputIsOpen) {
-                setState({
-                    ...state,
-                    serviceInputDialogShow: true
-                });
-            } else {
-                appAPI.stop_input();
-            }
-            return false;
-        },
-        [serviceInputIsOpen]
-    );
+    const device = new DesktopDevices(Mobile_Device_Id);
+    const { password, deviceId } = device.getInfo();
+    const { screenRecordingIsAuthed, serviceInputIsOpen, serviceMediaIsRunning, connected } =
+        device.getState();
+
+    const handleInputService = React.useCallback((event: any) => {
+        event.stopPropagation();
+        event.preventDefault();
+        if (!AppAPI.serviceInputIsOpen) {
+            setDialogState({
+                ...dialogState,
+                serviceInputDialogShow: true
+            });
+        } else {
+            AppAPI.serviceInputIsOpen = false;
+            new AppAPI().stop_input();
+        }
+        return false;
+    }, []);
 
     const handleMediaService = React.useCallback(
         (event: any) => {
             event.stopPropagation();
             event.preventDefault();
-            if (ServerApi.getServerApi().length === 0) {
-                alert('服务地址不能为空');
-                return;
-            }
 
-            if (!ServerApi.getServerApi().startsWith('ws')) {
-                alert('服务地址必须以ws://或者wss://开头');
-                return;
-            }
-            if (isDesktop()) {
-                // if (!AppAPI.pythonPath) {
-                //     alert('Python路径没有配置,请按帮助文档设置Python路径');
-                //     return;
-                // }
-                if (!screenRecordingIsAuthed) {
-                    alert('启动服务前,请开启屏幕录制');
-                    return;
-                }
-            }
+            const { serviceMediaIsRunning } = device.getState();
+
             if (!serviceMediaIsRunning) {
-                setState({
-                    ...state,
+                new DesktopDevices(Mobile_Device_Id).setConnected(DeviceConnect.Inited);
+
+                setDialogState({
+                    ...dialogState,
                     serviceMediaDialogShow: true
                 });
             } else {
-                setState({
-                    ...state,
+                setDialogState({
+                    ...dialogState,
                     serviceMediaStopDialogShow: true
                 });
             }
             return false;
         },
-        [serviceMediaIsRunning, screenRecordingIsAuthed]
+        [dialogState]
     );
-    // @ts-ignore
+
     return (
         <View w100p aCenter jCenter>
             <Box
@@ -116,13 +89,12 @@ export default function HomePage({
                     alignItems: 'center'
                 }}
             >
-                111
                 {tabId === 'link' && (
                     <>
                         <Box
                             sx={{
                                 display: isDesktop() ? 'none' : 'flex',
-                                pt: 4,
+                                pt: 2,
                                 height: 85,
                                 fontSize: 32,
                                 color: '#333',
@@ -135,40 +107,42 @@ export default function HomePage({
                         </Box>
                         <Box
                             sx={{
-                                pt: isDesktop() ? 3 : undefined,
                                 m: 1
                             }}
                         >
+                            {/* <View
+                                textColor="#333"
+                                text={JSON.stringify({
+                                    screenRecordingIsAuthed,
+                                    serviceInputIsOpen,
+                                    serviceMediaIsRunning,
+                                    connected
+                                })}
+                            ></View> */}
                             <Box sx={{ mb: 2, minWidth: 320 }}>
-                                {serviceMediaIsRunning ? (
-                                    <DeviceCard
-                                        handleMediaService={handleMediaService}
-                                        connected={connected}
-                                        // onRefreshPassword={onRefreshPassword}
-                                        password={password}
-                                        deviceId={deviceId ? formatNumber(Number(deviceId)) : ''}
-                                    />
-                                ) : (
-                                    <ServiceStartCard handleMediaService={handleMediaService} />
-                                )}
+                                <DeviceCard
+                                    handleMediaService={handleMediaService}
+                                    connected={connected}
+                                    password={password!}
+                                    deviceId={deviceId ? deviceId : ''}
+                                />
                             </Box>
                             <Box>
                                 <PermissionsCard
                                     screenRecordingIsAuthed={screenRecordingIsAuthed}
+                                    serviceMediaIsRunning={serviceMediaIsRunning}
+                                    serviceInputIsOpen={serviceInputIsOpen}
                                     handleInputService={handleInputService}
                                     handleMediaService={handleMediaService}
-                                    serviceInputIsOpen={serviceInputIsOpen}
-                                    serviceMediaIsRunning={serviceMediaIsRunning}
                                 />
                             </Box>
-
                             <View mt12 hide>
                                 <ServerCard />
                             </View>
                             <View rowVCenter center mt12>
                                 <View
+                                    hide
                                     mt12
-                                    hide={isDesktop()}
                                     buttonOutlined={'使用文档'}
                                     onClick={() => {
                                         new AppAPI().open_url(
@@ -185,17 +159,38 @@ export default function HomePage({
                                     titleIcon: <WarningAmberIcon sx={{ color: 'red' }} />,
                                     content: '关闭服务将自动关闭所有已建立的连接',
                                     keepMounted: true,
-                                    open: state.serviceMediaStopDialogShow,
-                                    onConfirm: () => {
-                                        setState({
-                                            ...state,
+                                    open: dialogState.serviceMediaStopDialogShow,
+                                    onConfirm: async () => {
+                                        setDialogState({
+                                            ...dialogState,
                                             serviceMediaStopDialogShow: false
                                         });
-                                        appAPI.stop_service();
+                                        new AppAPI().stop_service();
+
+                                        const { wsClient } = Devices.get(Mobile_Device_Id)!;
+                                        new DesktopDevices(Mobile_Device_Id).setConnected(
+                                            DeviceConnect.Inited
+                                        );
+                                        if (wsClient && wsClient.isOpen()) {
+                                            wsClient.sendMessage(
+                                                JSON.stringify({
+                                                    action: 'close',
+                                                    payload: {
+                                                        code: WsCloseCode.WS_CLOSE_STOP_RECONNECT,
+                                                        reason: 'WS_CLOSE_STOP_RECONNECT'
+                                                    }
+                                                })
+                                            );
+                                            new DesktopDevices(Mobile_Device_Id).setWsClient(null);
+                                            await waitForResult(() => {
+                                                return !wsClient || wsClient.isClosed();
+                                            });
+                                        }
+                                        onUpdateAt();
                                     },
                                     onCancel: () => {
-                                        setState({
-                                            ...state,
+                                        setDialogState({
+                                            ...dialogState,
                                             serviceMediaStopDialogShow: false
                                         });
                                     }
@@ -210,13 +205,13 @@ export default function HomePage({
                                     content:
                                         '开启录屏权限将自动开启服务，允许其他设备向此设备清求建立连接',
                                     keepMounted: true,
-                                    open: state.serviceMediaDialogShow,
+                                    open: dialogState.serviceMediaDialogShow,
                                     onConfirm: async () => {
                                         onConfirmInitService();
                                     },
                                     onCancel: () => {
-                                        setState({
-                                            ...state,
+                                        setDialogState({
+                                            ...dialogState,
                                             serviceMediaDialogShow: false
                                         });
                                     }
@@ -238,36 +233,29 @@ export default function HomePage({
                                         </>
                                     ),
                                     keepMounted: true,
-                                    open: state.serviceInputDialogShow,
+                                    open: dialogState.serviceInputDialogShow,
                                     onConfirm: () => {
-                                        appAPI.start_action(
+                                        new AppAPI().start_action(
                                             'android.settings.ACCESSIBILITY_SETTINGS'
                                         );
-                                        setState({
-                                            ...state,
+                                        setDialogState({
+                                            ...dialogState,
                                             serviceInputDialogShow: false
                                         });
                                     },
                                     onCancel: () => {
-                                        setState({
-                                            ...state,
+                                        setDialogState({
+                                            ...dialogState,
                                             serviceInputDialogShow: false
                                         });
                                     }
                                 }}
                             />
                         </Box>
+                        <View displayNone>
+                            <DecisionView />
+                        </View>
                     </>
-                )}
-                {tabId === 'server' && (
-                    <Box sx={{ maxWidth: 720, pt: 2 }}>
-                        <SwerverManager />
-                    </Box>
-                )}
-                {false && (
-                    <Box sx={{ position: 'fixed', bottom: 0, left: 0, right: 0 }}>
-                        <BottomNavigationView tabId={tabId} setTabId={setTabId} />
-                    </Box>
                 )}
             </Box>
         </View>

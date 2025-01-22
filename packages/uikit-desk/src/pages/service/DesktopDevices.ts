@@ -1,7 +1,8 @@
-import AppAPI from "../../common/AppApi";
-import { updateApp } from "../../common/utils";
-import WebSocketClient from "./WebSocketClient";
-import WebSocketCtlClient from "./WebSocketCtlClient";
+import AppAPI from '../../common/AppApi';
+import { isDesktop, updateApp } from '../../common/utils';
+import WebSocketAndroidClient from './WebSocketAndroidClient';
+import WebSocketClient from './WebSocketClient';
+import WebSocketCtlClient from './WebSocketCtlClient';
 
 export const KEY_DEVICE_ID = 'device_device_id_1';
 export const KEY_PASSWORD = 'device_password';
@@ -9,11 +10,11 @@ export const Devices: Map<string, DeviceInfo> = new Map();
 
 export interface DeviceInfo {
     winId: string;
-    connected?:number;
-    serviceMediaIsRunning?:boolean;
+    connected?: number;
+    serviceMediaIsRunning?: boolean;
     deviceId?: string;
     password?: string;
-    wsClient?: WebSocketClient | null;
+    wsClient?: WebSocketClient | WebSocketAndroidClient | null;
 }
 
 export function updateDevices(winId: string, device: Partial<DeviceInfo>) {
@@ -54,7 +55,7 @@ export function loadDevices() {
     }
 }
 
-export enum DeviceConnect{
+export enum DeviceConnect {
     Inited = -2,
     Connecting = 0,
     Closed = -1,
@@ -63,42 +64,50 @@ export enum DeviceConnect{
 
 export default class DesktopDevices {
     connected: DeviceConnect = DeviceConnect.Inited;
-    serviceMediaIsRunning:boolean = false;
+    serviceMediaIsRunning: boolean = false;
     winId: string;
-    constructor (winId:string){
-        this.winId = winId
-    }
-    
-    updateDesktopDevice(device:Partial<DeviceInfo>){
-        updateDevices(this.winId,device)
-        updateApp()
+    constructor(winId: string) {
+        this.winId = winId;
     }
 
-    setWsClient(wsClient:null|WebSocketClient) {
-        this.updateDesktopDevice({wsClient})
+    updateDesktopDevice(device: Partial<DeviceInfo>) {
+        updateDevices(this.winId, device);
+        updateApp();
+    }
+
+    setWsClient(wsClient: null | WebSocketClient | WebSocketAndroidClient) {
+        this.updateDesktopDevice({ wsClient });
     }
     setConnected(connected: DeviceConnect) {
         // console.log(this.winId,{connected},this.getState())
-        this.updateDesktopDevice({connected})
+        this.updateDesktopDevice({ connected });
     }
     setServiceMediaIsRunning(serviceMediaIsRunning: boolean) {
-        this.serviceMediaIsRunning = serviceMediaIsRunning
+        this.serviceMediaIsRunning = serviceMediaIsRunning;
         // console.log(this.winId,{serviceMediaIsRunning},this.getState())
-        this.updateDesktopDevice({serviceMediaIsRunning})
+        this.updateDesktopDevice({ serviceMediaIsRunning });
     }
-    
-    getState(){
-        const serviceInputIsOpen = WebSocketCtlClient.inputIsOpen();
-        const screenRecordingIsAuthed = AppAPI.screenRecordingIsAuthed;
-        const device = Devices.get(this.winId)
-        // console.log("getState",{device})
-        let serviceMediaIsRunning =  false;
-        let connected = DeviceConnect.Inited;
-        if(device){
-            serviceMediaIsRunning = device.serviceMediaIsRunning !== undefined? device.serviceMediaIsRunning:false
-            connected = device.connected !== undefined? device.connected:DeviceConnect.Inited
+    getInfo() {
+        return Devices.get(this.winId)!;
+    }
+    getState() {
+        let serviceInputIsOpen = AppAPI.serviceInputIsOpen;
+
+        if (isDesktop()) {
+            serviceInputIsOpen = WebSocketCtlClient.inputIsOpen();
         }
-        
-        return {screenRecordingIsAuthed, serviceInputIsOpen, serviceMediaIsRunning, connected}
+
+        const screenRecordingIsAuthed = AppAPI.screenRecordingIsAuthed;
+        const device = Devices.get(this.winId);
+        // console.log("getState",{device})
+        let serviceMediaIsRunning = false;
+        let connected = DeviceConnect.Inited;
+        if (device) {
+            serviceMediaIsRunning =
+                device.serviceMediaIsRunning !== undefined ? device.serviceMediaIsRunning : false;
+            connected = device.connected !== undefined ? device.connected : DeviceConnect.Inited;
+        }
+
+        return { screenRecordingIsAuthed, serviceInputIsOpen, serviceMediaIsRunning, connected };
     }
-} 
+}

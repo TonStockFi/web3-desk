@@ -13,11 +13,11 @@ import FormLabel from '@mui/material/FormLabel';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { View } from '@web3-explorer/uikit-view/dist/View';
+import { DeviceConnect } from '../../pages/service/DesktopDevices';
 
 export default function DeviceCard({
     deviceId,
     connected,
-    // onRefreshPassword,
     serviceMediaIsRunning,
     handleMediaService,
     password
@@ -25,7 +25,6 @@ export default function DeviceCard({
     serviceMediaIsRunning?: boolean;
     handleMediaService: any;
     connected: number;
-    // onRefreshPassword: any;
     password: string;
     deviceId: string;
 }) {
@@ -59,7 +58,12 @@ export default function DeviceCard({
                             </Typography>
                         </Box>
                     </Box>
-                    <Box sx={{ mb: 1, mt: 0.5 }}>
+                    <Box
+                        sx={{
+                            mb: 1,
+                            mt: 0.5
+                        }}
+                    >
                         <Stack direction="row" spacing={2} sx={{ mb: 0.5 }}>
                             <Box sx={{ pt: 0.1 }}>
                                 <LockIcon fontSize={'small'} sx={{ color: 'text.secondary' }} />
@@ -91,7 +95,12 @@ export default function DeviceCard({
                                         fontSize: '1.2rem'
                                     }}
                                 >
-                                    {password}
+                                    {Boolean(
+                                        connected === DeviceConnect.Closed ||
+                                            connected === DeviceConnect.Inited
+                                    )
+                                        ? '*******'
+                                        : password}
                                 </Typography>
                                 {/*<Box sx={{ mt: -0.5 }}>*/}
                                 {/*    <IconButton*/}
@@ -172,14 +181,15 @@ export default function DeviceCard({
                         {connected === -2 && (
                             <Stack direction="column" spacing={2} sx={{ mb: 0 }}>
                                 <Button
-                                    size="small"
+                                    sx={{ width: 200 }}
+                                    size="large"
                                     onClick={handleMediaService}
                                     startIcon={<PlayArrowIcon />}
                                     variant="contained"
                                 >
                                     启动服务
                                 </Button>
-                                <View>
+                                <View w={280}>
                                     <View
                                         text={'点击启动服务启用屏幕捕获权限，即可启动屏幕共享服务'}
                                     ></View>

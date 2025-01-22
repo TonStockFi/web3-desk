@@ -84,7 +84,7 @@ export default function Permissions({
                     sx={{ mb: 0.5 }}
                     control={
                         <Switch
-                            checked={serviceMediaIsRunning}
+                            checked={screenRecordingIsAuthed}
                             onClick={handleMediaService}
                             name="service"
                         />

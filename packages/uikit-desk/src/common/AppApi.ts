@@ -13,8 +13,8 @@ export default class AppAPI {
         }
     }
 
-    webview_is_ready(apiUrl: boolean, deviceId: string) {
-        return this.api.webview_is_ready(apiUrl, deviceId);
+    webview_is_ready() {
+        return this.api.webview_is_ready();
     }
     static pythonPath = ""
     static screenRecordingStatus:string = ""
@@ -46,14 +46,11 @@ export default class AppAPI {
         return this.api.check_service();
     }
 
-    init_service(apiUrl: string, password: string, passwordHash: string) {
-        if(isDesktop()){
-            window.dispatchEvent(new CustomEvent("init_service",{
-                detail:{apiUrl, password, passwordHash}
-            }))
-            return 
-        }
-        return this.api.init_service(apiUrl, password, passwordHash);
+    init_service() {
+        return this.api.init_service();
+    }
+    postControlEvent(payload:any){
+        return this.api.postControlEvent(JSON.stringify(payload));
     }
 
     stop_service() {
