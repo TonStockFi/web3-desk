@@ -1,15 +1,14 @@
-import AppAPI from "../../common/AppApi";
-import { getVideoId, isMac } from "../../common/utils";
-import { WsCloseCode } from "../../types";
-import DesktopDevices, { DeviceConnect } from "./DesktopDevices";
+import AppAPI from '../../common/AppApi';
+import { getVideoId, isMac } from '../../common/utils';
+import { WsCloseCode } from '../../types';
+import DesktopDevices, { DeviceConnect } from './DesktopDevices';
 
-import WebSocketCtlClient from "./WebSocketCtlClient";
+import WebSocketCtlClient from './WebSocketCtlClient';
 
 export default class WebSocketClient {
-    sources: { name: string; id: string; display_id: string; }[];
-    setSources(sources: { name: string; id: string; display_id: string; }[]) {
-        
-        this.sources = sources
+    sources: { name: string; id: string; display_id: string }[];
+    setSources(sources: { name: string; id: string; display_id: string }[]) {
+        this.sources = sources;
     }
     private socket?: WebSocket;
     deviceId: String;
@@ -28,7 +27,7 @@ export default class WebSocketClient {
         password: string,
         passwordHash: string
     ) {
-        this.sources = []
+        this.sources = [];
         this.url = url;
         this.deviceId = deviceId;
         this.winId = winId;
@@ -65,26 +64,26 @@ export default class WebSocketClient {
         // Close the peer connection if you want to completely stop WebRTC
         this.peerConnection.close();
     }
-    getWindowSize(screenSource:{id:string,display_id:string,name:string}){
+    getWindowSize(screenSource: { id: string; display_id: string; name: string }) {
         let { width, height } = window.screen;
         if (!screenSource.display_id) {
-            const windows = WebSocketCtlClient.getWindows()
+            const windows = WebSocketCtlClient.getWindows();
             const win = windows.find(row => row.title === screenSource.name);
             if (win) {
                 width = win.bounds.width;
                 height = win.bounds.height;
             }
         }
-        return {width, height};
+        return { width, height };
     }
     async handleScreen() {
-        let {sources} = this;
-        if(sources.length === 0){
+        let { sources } = this;
+        if (sources.length === 0) {
             sources = await new AppAPI().get_sources(['window', 'screen']);
         }
         const screenSource = sources.find((row: { id: string }) => row.id === this.winId);
-        
-        const {width,height} = await this.getBounds()
+
+        const { width, height } = await this.getBounds();
         const stream = await navigator.mediaDevices.getUserMedia({
             audio: false,
             video: {
@@ -101,7 +100,7 @@ export default class WebSocketClient {
         });
 
         const videoElement = document.getElementById(getVideoId(screenSource)) as HTMLVideoElement;
-        if(!this.peerConnection || this.peerConnection.signalingState == "closed"){
+        if (!this.peerConnection || this.peerConnection.signalingState == 'closed') {
             this.peerConnection = new RTCPeerConnection();
         }
         videoElement!.srcObject! = stream;
@@ -138,43 +137,51 @@ export default class WebSocketClient {
             }
         });
     }
-    async getSource(){
-        let {sources} = this;
-        
-        if(sources.length === 0){
+    async getSource() {
+        let { sources } = this;
+
+        if (sources.length === 0) {
             sources = await new AppAPI().get_sources(['window', 'screen']);
         }
 
         const screenSource = sources.find((row: { id: string }) => row.id === this.winId);
         return screenSource;
     }
-    async getBounds(){
-        const screenSource = await this.getSource()
-        if(screenSource?.display_id){
-            return {x:0,y:0,width:window.screen.width,height:window.screen.height}
+    async getBounds() {
+        const screenSource = await this.getSource();
+        if (screenSource?.display_id) {
+            return { x: 0, y: 0, width: window.screen.width, height: window.screen.height };
         }
-        const windows = WebSocketCtlClient.getWindows()
-        
+        const windows = WebSocketCtlClient.getWindows();
+
         const win = windows.find(row => row.title === screenSource!.name);
-        const {x,y,width,height} =  win.bounds
-        return {x,y,width,height}
+        const { x, y, width, height } = win.bounds;
+        return { x, y, width, height };
     }
     async init() {
-        const device = new DesktopDevices(this.winId)
-        device.setConnected(DeviceConnect.Connecting)
+        const device = new DesktopDevices(this.winId);
+        device.setConnected(DeviceConnect.Connecting);
         const ws = new WebSocket(this.url);
         ws.binaryType = 'arraybuffer';
         this.socket = ws;
 
         ws.onopen = async () => {
             console.log('WebSocket connection established.');
-            device.setConnected(DeviceConnect.Connected)
-            const {x,y,width,height}  = await this.getBounds()
+            device.setConnected(DeviceConnect.Connected);
+            const { x, y, width, height } = await this.getBounds();
+            const dpi = window.devicePixelRatio * 96; // 96 is the standard DPI for most screens
+
             ws.send(
                 JSON.stringify({
                     action: 'registerDevice',
                     payload: {
-                        x,y,width,height,
+                        scrren:{
+                            x,
+                            y,
+                            width,
+                            height,
+                            dpi
+                        },
                         deviceId: this.deviceId,
                         password: this.passwordHash,
                         platform: isMac() ? 'darwin' : 'win32'
@@ -182,13 +189,13 @@ export default class WebSocketClient {
                 })
             );
 
-            const t = setInterval(()=>{
-                if(ws.readyState === WebSocket.OPEN){
-                    this.sendJsonMessage({ping:1})
-                }else{
-                    clearInterval(t)
+            const t = setInterval(() => {
+                if (ws.readyState === WebSocket.OPEN) {
+                    this.sendJsonMessage({ ping: 1 });
+                } else {
+                    clearInterval(t);
                 }
-            },5000)
+            }, 5000);
         };
 
         ws.onmessage = async event => {
@@ -199,7 +206,7 @@ export default class WebSocketClient {
 
                 switch (eventType) {
                     case 'deviceInfo': {
-                        console.log("deviceInfo")
+                        console.log('deviceInfo');
                         const deviceInfo = await this.getDeviceInfo();
                         this.sendJsonMessage({
                             action: 'deviceMsg',
@@ -207,7 +214,7 @@ export default class WebSocketClient {
                                 deviceInfo
                             }
                         });
-                        device.setServiceMediaIsRunning(true)
+                        device.setServiceMediaIsRunning(true);
                         this.handleScreen();
                         return;
                     }
@@ -225,18 +232,18 @@ export default class WebSocketClient {
                     }
                     case 'stopPushingImage': {
                         this.stopVideo();
-                        device.setServiceMediaIsRunning(false)
+                        device.setServiceMediaIsRunning(false);
                         return;
                     }
                     default: {
-                        const {x,y} = await this.getBounds()
-                        if(payload.x !== undefined){
-                            payload.x = x + payload.x
+                        const { x, y } = await this.getBounds();
+                        if (payload.x !== undefined) {
+                            payload.x = x + payload.x;
                         }
-                        if(payload.y !== undefined){
-                            payload.y = y + payload.y
+                        if (payload.y !== undefined) {
+                            payload.y = y + payload.y;
                         }
-                        WebSocketCtlClient.sendJsonMessage(payload)
+                        WebSocketCtlClient.sendJsonMessage(payload);
                         return;
                     }
                 }
@@ -244,23 +251,23 @@ export default class WebSocketClient {
         };
 
         ws.onclose = ({ code, reason }) => {
-            device.setServiceMediaIsRunning(false)
+            device.setServiceMediaIsRunning(false);
             this.stopVideo();
             console.log('WebSocket connection closed.');
             if (code !== WsCloseCode.WS_CLOSE_STOP_RECONNECT) {
                 setTimeout(() => {
                     this.retry_count += 1;
                     if (this.retry_count < 10) {
-                        this.init()
+                        this.init();
                     } else {
-                        this.retry_count = 0
-                        device.setConnected(DeviceConnect.Closed)                        
+                        this.retry_count = 0;
+                        device.setConnected(DeviceConnect.Closed);
                         alert('连接服务端失败！');
                     }
                 }, 1000);
-            }else{
-                this.retry_count = 0
-                device.setConnected(DeviceConnect.Inited)  
+            } else {
+                this.retry_count = 0;
+                device.setConnected(DeviceConnect.Inited);
             }
         };
 
@@ -269,15 +276,14 @@ export default class WebSocketClient {
         };
     }
     async getDeviceInfo() {
-
-        let {sources} = this;
-        if(sources.length === 0){
+        let { sources } = this;
+        if (sources.length === 0) {
             sources = await new AppAPI().get_sources(['window', 'screen']);
         }
 
         // const sources = await new AppAPI().get_sources(['window', 'screen']);
         const screenSource = sources.find((row: { id: string }) => row.id === this.winId);
-        const {width,height} = this.getWindowSize(screenSource!)
+        const { width, height } = this.getWindowSize(screenSource!);
 
         const devicePixelRatio = window.devicePixelRatio;
         const dpi = 96 * devicePixelRatio;
@@ -286,7 +292,7 @@ export default class WebSocketClient {
         //@ts-ignore
         const arch = window.backgroundApi.arch();
         return {
-            inputIsOpen:!!WebSocketCtlClient.inputIsOpen(),
+            inputIsOpen: !!WebSocketCtlClient.inputIsOpen(),
             mediaIsStart: true,
             compressQuality: 1,
             delaySendImageDataMs: 1000,
@@ -301,7 +307,6 @@ export default class WebSocketClient {
                 dpi
             }
         };
-        
     }
     isOpen() {
         return this.socket && this.socket.readyState === WebSocket.OPEN;

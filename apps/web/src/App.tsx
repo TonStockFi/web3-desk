@@ -1,7 +1,6 @@
 import { App as AppInner } from '@web3-desk/uikit-desk';
 import { View } from '@web3-explorer/uikit-view';
 import { Buffer } from 'buffer';
-import './App.css';
 window.Buffer = Buffer;
 
 function App() {

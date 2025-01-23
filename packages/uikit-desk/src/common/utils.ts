@@ -1,4 +1,4 @@
-export function generateRandomPassword( length: number = 7): string {
+export function generateRandomPassword( length: number = 6): string {
     let chars = 'abcdefghijklmnpqrstuvwxyz123456789';
     
     let password = '';
@@ -63,6 +63,10 @@ export function deepDiff(obj1: any, obj2: any): boolean {
 
     findChanges(obj1, obj2);
     return hasDifference;
+}
+
+export function isLocalDev(){
+    return location.href.indexOf(":5173") > -1
 }
 
 export function isDesktop(){

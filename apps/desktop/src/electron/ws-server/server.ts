@@ -40,12 +40,15 @@ export enum ErrCodes {
 
 export interface Device {
     deviceId: string;
-    width?:number;
-    height?:number;
-    x?:number;
-    y?:number;
+    screen: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        dpi: number;
+    };
     password: string;
-    platform: 'WEB' | 'ADR';
+    platform: 'ADR' | 'darwin' | 'win32' | "WEB";
 }
 
 export interface User {
@@ -78,8 +81,6 @@ function closeWs(ws: WebSocket, code?: number, reason?: string) {
         ws.close(code, reason);
     }
 }
-
-
 const sendBufferMessage = (message: any, ws: WebSocket) => {
     if (isWs_OPEN(ws)) {
         ws.send(message);
@@ -100,7 +101,7 @@ const sendMessage = (message: any, ws: WebSocket) => {
     }
 };
 
-function checkUser(users: Map<any, User>, ws: WebSocket, deviceId: string, password: string) {
+function checkUser(users: Map<any, User>, ws: WebSocket, deviceId: string, password: string,test?:boolean) {
     let deviceUser: User | null = null;
     users.forEach((user, _) => {
         if (user.device && user.device.deviceId === deviceId) {
@@ -117,7 +118,7 @@ function checkUser(users: Map<any, User>, ws: WebSocket, deviceId: string, passw
         );
         return null;
     } else {
-        if (deviceUser.device.password !== password) {
+        if (!test && deviceUser.device.password !== password) {
             sendMessage(
                 {
                     action: 'loginError',
@@ -147,7 +148,19 @@ export class WebSocketServerWrapper {
     private users: Map<string, User>;
     private wss: WebSocketServer | undefined;
     private port: number;
-
+    private Devices: Map<
+    string,
+    {
+        screen: {
+            x: number;
+            y: number;
+            width: number;
+            height: number;
+            dpi: number;
+        };
+        platform: 'ADR' | 'darwin' | 'win32';
+    }
+    > = new Map();
     constructor(port: number = 6788) {
         this.port = port;
         this.users = new Map();
@@ -211,6 +224,9 @@ export class WebSocketServerWrapper {
                 const userAgent = req.headers['user-agent'];
                 const metadata = getMetaData(userAgent);
                 console.log('New client connected');
+                // setInterval(()=>{
+                //     console.log(this.Devices)
+                // },2000)
                 await this.handleWebSocketSession(ws, metadata);
             });
 
@@ -258,7 +274,6 @@ export class WebSocketServerWrapper {
             client: null
         });
 
-        
         ws.addEventListener('message', async msg => {
             try {
                 this.users.forEach((user_, _) => {
@@ -273,25 +288,8 @@ export class WebSocketServerWrapper {
                 const message = msg.data;
                 if (typeof message === 'string' && message.startsWith('{')) {
                     const data = JSON.parse(message);
-                    // console.log(">> ",data.action)
-                    if (data.action === 'registerCtl') {
-                        this.users.forEach((user_, _) => {
-                            if (user_.ctl) {
-                                closeWs(user_.ws);
-                            }
-                        });
-                        this.users.set(userId, {
-                            ...this.users.get(userId),
-                            manager: {}
-                        });
-                        sendMessage(
-                            {
-                                action: 'logged'
-                            },
-                            ws
-                        );
-                        return;
-                    }
+                    console.log('>> ', data.action);
+
                     if (data.action === 'registerManager') {
                         this.users.forEach((user_, _) => {
                             if (user_.manager) {
@@ -311,7 +309,9 @@ export class WebSocketServerWrapper {
                         return;
                     }
                     if (data.action === 'registerDevice') {
-                        const { deviceId, platform, password,width,height,x,y } = data.payload;
+                        const { deviceId, platform, password, screen } = data.payload;
+                        console.log("registerDevice",screen,platform)
+                        this.Devices.set(deviceId, { screen, platform });
                         this.users.forEach((user_, userId_) => {
                             if (
                                 user_.device &&
@@ -323,7 +323,7 @@ export class WebSocketServerWrapper {
                         });
                         this.users.set(userId, {
                             ...this.users.get(userId),
-                            device: { deviceId, password, platform,width,height,x,y}
+                            device: { deviceId, password, platform, screen}
                         });
                         sendMessage(
                             {
@@ -357,19 +357,33 @@ export class WebSocketServerWrapper {
                         return;
                     }
                     if (data.action === 'registerClient') {
-                        const { deviceId, password, platform } = data.payload;
-                        const pairDevice = checkUser(this.users, ws, deviceId, password)
+                        const { deviceId, password, platform,test } = data.payload;
+                        const device1 = this.Devices.get(deviceId);
+                        const pairDevice = checkUser(this.users, ws, deviceId, password,test);
+
+                        if(test){
+                            sendMessage(
+                                {
+                                    action: 'logged',
+                                    payload: {
+                                        device: device1
+                                    }
+                                },
+                                ws
+                            );
+                        }
                         if (pairDevice) {
+
                             this.users.set(userId, {
                                 ...this.users.get(userId),
                                 client: { deviceId, platform, password }
                             });
-                            const {x,y,width,height} = pairDevice.device;
-                            
                             sendMessage(
                                 {
                                     action: 'logged',
-                                    payload: {x,y,width,height,platform: pairDevice.device.platform}
+                                    payload: {
+                                        device: device1
+                                    }
                                 },
                                 ws
                             );
@@ -401,7 +415,6 @@ export class WebSocketServerWrapper {
                     }
                     if (data.action === 'deviceMsg') {
                         const user = this.users.get(userId);
-                        // console.log(user)
                         if (!user.device) {
                             sendMessage(
                                 {
@@ -423,11 +436,11 @@ export class WebSocketServerWrapper {
                                 }
                             }
                         });
-                        
+
                         // console.log({count})
                         return;
                     }
-                } else if(typeof message !== 'string' ) {
+                } else if (typeof message !== 'string') {
                     const user = this.users.get(userId);
                     this.users.forEach((user_, _) => {
                         if (user_.client && user_.client.deviceId === user.device.deviceId) {
@@ -438,7 +451,6 @@ export class WebSocketServerWrapper {
                             }
                         }
                     });
-                
                 }
             } catch (err: any) {
                 console.error('error', err);

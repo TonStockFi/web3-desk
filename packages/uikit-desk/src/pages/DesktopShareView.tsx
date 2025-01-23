@@ -86,10 +86,19 @@ export default function DesktopShareView({
             <View pt={0}>
                 <View mb12>
                     <DeviceCard
+                        onStopService={() => {
+                            window.dispatchEvent(
+                                new CustomEvent('stop_service', {
+                                    detail: {
+                                        winId
+                                    }
+                                })
+                            );
+                        }}
+                        winId={winId}
                         handleMediaService={handleMediaService}
                         connected={connected}
                         password={password}
-                        serviceMediaIsRunning={serviceMediaIsRunning}
                         deviceId={deviceId ? formatNumber(Number(deviceId)) : ''}
                     />
                 </View>

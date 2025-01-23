@@ -213,6 +213,12 @@ export function DesktopWindowsView() {
                 mb12
                 mr12
                 sx={{
+                    '& .MuiListItemText-root ': {
+                        color: 'white',
+                        width: '100%',
+                        mb: 1.5,
+                        textAlign: 'center'
+                    },
                     '& .MuiButtonBase-root ': {
                         border: '1px solid rgb(255 255 255 / 8%)',
                         // borderRadius: 1,
@@ -351,7 +357,15 @@ export function DesktopWindowsView() {
                             <View hide={!loading} center wh100p absFull>
                                 <View loading></View>
                             </View>
-                            <View abs bottom={6} right={12} left={12} rowVCenter jSpaceBetween>
+                            <View
+                                abs
+                                bottom={6}
+                                h={36}
+                                right={12}
+                                left={12}
+                                rowVCenter
+                                jSpaceBetween
+                            >
                                 <View rowVCenter>
                                     {Boolean(
                                         device?.serviceMediaIsRunning ||

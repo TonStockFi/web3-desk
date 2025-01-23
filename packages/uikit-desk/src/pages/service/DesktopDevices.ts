@@ -10,6 +10,7 @@ export const Devices: Map<string, DeviceInfo> = new Map();
 
 export interface DeviceInfo {
     winId: string;
+    clientConnected?: boolean;
     connected?: number;
     serviceMediaIsRunning?: boolean;
     deviceId?: string;
@@ -64,7 +65,6 @@ export enum DeviceConnect {
 
 export default class DesktopDevices {
     connected: DeviceConnect = DeviceConnect.Inited;
-    serviceMediaIsRunning: boolean = false;
     winId: string;
     constructor(winId: string) {
         this.winId = winId;
@@ -83,9 +83,10 @@ export default class DesktopDevices {
         this.updateDesktopDevice({ connected });
     }
     setServiceMediaIsRunning(serviceMediaIsRunning: boolean) {
-        this.serviceMediaIsRunning = serviceMediaIsRunning;
-        // console.log(this.winId,{serviceMediaIsRunning},this.getState())
         this.updateDesktopDevice({ serviceMediaIsRunning });
+    }
+    setDevideInfo(deviceInfo: Partial<DeviceInfo>) {
+        this.updateDesktopDevice({ ...deviceInfo });
     }
     getInfo() {
         return Devices.get(this.winId)!;

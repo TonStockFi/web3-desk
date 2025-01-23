@@ -38,6 +38,7 @@ export default function DecisionView() {
             window.removeEventListener('on_screen_image', on_screen_image);
         };
     }, []);
+    const wsClient = device.getInfo().wsClient as WebSocketAndroidClient;
 
     return (
         <View center column overflowYAuto bgColor="#3b3b3b">
@@ -45,7 +46,6 @@ export default function DecisionView() {
                 <img
                     ref={imgRef}
                     onLoad={() => {
-                        const wsClient = device.getInfo().wsClient as WebSocketAndroidClient;
                         // const arrayBuffer = dataURIToArrayBuffer(screenImage);
                         wsClient && wsClient.sendChannalScreenMessage(screenImage);
                     }}

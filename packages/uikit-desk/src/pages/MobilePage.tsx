@@ -21,9 +21,9 @@ import WebSocketAndroidClient from './service/WebSocketAndroidClient';
 
 export async function initClients(winId: string) {
     const device = Devices.get(winId)!;
-    const password = generateRandomPassword();
-    updateDevices(winId, { password });
-    let { wsClient, deviceId } = device;
+    // const password = generateRandomPassword();
+    // updateDevices(winId, { password });
+    let { wsClient, password, deviceId } = device;
     const passwordHash = md5(password!);
     const apiUrl = WS_URL;
 
@@ -55,7 +55,6 @@ export async function initClients(winId: string) {
 
 export function MobilePagInner() {
     const { updateAt, onUpdateAt } = useScreenShareContext();
-    const device = Devices.get(Mobile_Device_Id);
     // console.log(JSON.stringify(device));
     const [dialogState, setDialogState] = React.useState({
         serviceMediaDialogShow: false,
@@ -73,15 +72,12 @@ export function MobilePagInner() {
         });
     }, []);
 
-    const onChangeApi = () => {
-        new AppAPI().stop_service();
-    };
-
     const on_state_changed = async () => {
         const res = await new AppAPI().check_service();
         const deviceInfo = JSON.parse(res);
-        const { mediaIsStart, inputIsOpen } = deviceInfo;
-        AppAPI.screenRecordingIsAuthed = mediaIsStart;
+        let { mediaIsStart, mediaIsReady, inputIsOpen } = deviceInfo;
+        // inputIsOpen = true;
+        AppAPI.screenRecordingIsAuthed = mediaIsReady;
         AppAPI.serviceInputIsOpen = inputIsOpen;
 
         saveDevices();
@@ -167,7 +163,6 @@ export function MobilePagInner() {
         <>
             <MobileHomePage
                 confirming={confirming}
-                onChangeApi={onChangeApi}
                 dialogState={dialogState}
                 setDialogState={setDialogState}
                 onConfirmInitService={onConfirmInitService}

@@ -3,27 +3,22 @@ import { useEffect } from 'react';
 import { default as AppAPI } from '../common/AppApi';
 
 import { md5 } from '@web3-explorer/lib-crypto/dist/utils';
-import { generateRandomPassword, waitForResult } from '../common/utils';
+import { waitForResult } from '../common/utils';
 import { WS_URL } from '../constant';
 import { WsCloseCode } from '../types';
 import { DesktopWindowsView } from './DesktopWindowsView';
 
 import { useTimeoutLoop } from '@web3-explorer/utils';
 import { useScreenShareContext } from './ScreenShareProvider';
-import DesktopDevices, {
-    DeviceConnect,
-    Devices,
-    saveDevices,
-    updateDevices
-} from './service/DesktopDevices';
+import DesktopDevices, { DeviceConnect, Devices, saveDevices } from './service/DesktopDevices';
 import WebSocketClient from './service/WebSocketClient';
 import WebSocketCtlClient from './service/WebSocketCtlClient';
 
 export async function initClients(winId: string) {
     const device = Devices.get(winId)!;
-    let { wsClient, deviceId } = device;
-    const password = generateRandomPassword();
-    updateDevices(winId, { password });
+    let { wsClient, password, deviceId } = device;
+    // const password = generateRandomPassword();
+    // updateDevices(winId, { password });
     const passwordHash = md5(password!);
     const apiUrl = WS_URL;
     try {

@@ -109,7 +109,7 @@ export default function ManagerClients({
                     <Table aria-label="simple table">
                         <TableHead>
                             <TableRow>
-                                <TableCell>设备ID</TableCell>
+                                <TableCell>识别码</TableCell>
                                 <TableCell align="right">类型</TableCell>
                                 <TableCell align="right">平台</TableCell>
                             </TableRow>

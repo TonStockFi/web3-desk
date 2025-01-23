@@ -1,11 +1,9 @@
-import AppAPI from "../../common/AppApi";
-import { WsCloseCode } from "../../types";
-import DesktopDevices, { DeviceConnect } from "./DesktopDevices";
-
-import WebSocketCtlClient from "./WebSocketCtlClient";
+import AppAPI from '../../common/AppApi';
+import { updateApp } from '../../common/utils';
+import { WsCloseCode } from '../../types';
+import DesktopDevices, { DeviceConnect } from './DesktopDevices';
 
 export default class WebSocketAndroidClient {
-    
     private socket?: WebSocket;
     deviceId: String;
     password: string;
@@ -18,6 +16,7 @@ export default class WebSocketAndroidClient {
     dataChannel_control?: RTCDataChannel;
     dataChannel_chat?: RTCDataChannel;
     dataChannel_screen?: RTCDataChannel;
+    device: DesktopDevices;
 
     constructor(
         url: string,
@@ -31,12 +30,13 @@ export default class WebSocketAndroidClient {
         this.winId = winId;
         this.password = password;
         this.passwordHash = passwordHash;
+        this.device = new DesktopDevices(this.winId);
         this.peerConnection = new RTCPeerConnection({
-            iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+            // iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
         });
         this.init();
     }
-    
+
     getPasswordHash() {
         return this.passwordHash;
     }
@@ -44,45 +44,78 @@ export default class WebSocketAndroidClient {
     getPassword() {
         return this.password;
     }
-    sendChannalScreenMessage(message:string) {
-        const {dataChannel_screen} = this;
-        if (dataChannel_screen && dataChannel_screen.readyState === "open") {
+    sendChannalScreenMessage(message: string) {
+        const { dataChannel_screen } = this;
+        if (dataChannel_screen && dataChannel_screen.readyState === 'open') {
+            this.device.setServiceMediaIsRunning(true);
             dataChannel_screen.send(message);
         }
     }
+    sendChannalControlMessage(message: string) {
+        const { dataChannel_control } = this;
+        if (dataChannel_control && dataChannel_control.readyState === 'open') {
+            dataChannel_control.send(message);
+        }
+    }
     async handleWebrtc() {
-        if(!this.peerConnection || this.peerConnection.signalingState == "closed"){
-            this.peerConnection = new RTCPeerConnection({iceServers: [{ urls: "stun:stun.l.google.com:19302" }]});
+        if (!this.peerConnection || this.peerConnection.signalingState == 'closed') {
+            this.peerConnection = new RTCPeerConnection({
+                // iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+            });
         }
         this.peerConnection.oniceconnectionstatechange = () => {
             console.log("ICE Connection State:", this.peerConnection.iceConnectionState);
+            updateApp();
         };
-        this.dataChannel_control = this.peerConnection.createDataChannel("control");
-
-        this.dataChannel_control.onopen = () => {
-            this.dataChannel_control!.send(JSON.stringify({init:true}))
-        };
-        this.dataChannel_control.onmessage = (e) => {
-            console.log("dataChannel_control",e.data)
-            const  event  = JSON.parse(e.data)
-            new AppAPI().postControlEvent(event)
-        };
-
-        this.dataChannel_chat = this.peerConnection.createDataChannel("chat");
         
-        this.dataChannel_chat.onopen = () => {
-            this.dataChannel_chat!.send(JSON.stringify({init:true}))
+        this.peerConnection.onconnectionstatechange = () => {
+            console.log("Connection State:", this.peerConnection.connectionState);
+            updateApp();
         };
-        this.dataChannel_chat.onmessage = (e) => console.log("Received:", e.data);
+        
+        this.peerConnection.onsignalingstatechange = () => {
+            console.log("Signaling State:", this.peerConnection.signalingState);
+            updateApp();
+        };
 
-        this.dataChannel_screen = this.peerConnection.createDataChannel("screen");
+        this.dataChannel_control = this.peerConnection.createDataChannel('control');
+
+        this.dataChannel_control.onopen = async () => {
+            updateApp()
+            this.dataChannel_control!.send(
+                JSON.stringify({ deviceInfo: await this.getDeviceInfo() })
+            );
+        };
+        this.dataChannel_control.onmessage = e => {
+            console.log('dataChannel_control', e.data);
+            const event = JSON.parse(e.data);
+            new AppAPI().postControlEvent(event);
+        };
+        this.dataChannel_control.onclose = () => {
+            updateApp()
+        };
+        this.dataChannel_chat = this.peerConnection.createDataChannel('chat');
+
+        this.dataChannel_chat.onopen = () => {
+            updateApp()
+        };
+        this.dataChannel_chat.onmessage = e => console.log('Received:', e.data);
+
+        this.dataChannel_chat.onclose = () => {
+            updateApp()
+        };
+        this.dataChannel_screen = this.peerConnection.createDataChannel('screen');
 
         this.dataChannel_screen.onopen = () => {
-
+            updateApp()
         };
-        this.dataChannel_screen.onmessage = (e) => console.log("Received:", e.data);
+        this.dataChannel_screen.onclose = () => {
+            updateApp()
+        };
+        this.dataChannel_screen.onmessage = e => console.log('Received:', e.data);
 
         this.peerConnection.onicecandidate = event => {
+            updateApp()
             if (event.candidate) {
                 // console.log(">>>>>>>>>>> candidate send ",JSON.stringify(event.candidate))
                 this.sendJsonMessage({
@@ -95,6 +128,7 @@ export default class WebSocketAndroidClient {
         };
         const offer = await this.peerConnection.createOffer();
         await this.peerConnection.setLocalDescription(offer);
+      
         // console.log(">>>>>>>>>>> offer send ",JSON.stringify(offer))
         this.sendJsonMessage({
             action: 'deviceMsg',
@@ -103,43 +137,46 @@ export default class WebSocketAndroidClient {
             }
         });
     }
-    
+
     async init() {
         console.log('WebSocketAndroidClient initClients');
-        const device = new DesktopDevices(this.winId)
-        device.setConnected(DeviceConnect.Connecting)
+        const device = new DesktopDevices(this.winId);
+        device.setConnected(DeviceConnect.Connecting);
         const ws = new WebSocket(this.url);
         ws.binaryType = 'arraybuffer';
         this.socket = ws;
 
         ws.onopen = async () => {
             console.log('WebSocket connection established.');
-            device.setConnected(DeviceConnect.Connected)
-            device.setServiceMediaIsRunning(true)
-
+            device.setConnected(DeviceConnect.Connected);
             const res = await new AppAPI().check_service();
             const deviceInfo = JSON.parse(res);
-            const {dpi,width,height}  = await deviceInfo.screen
+            const { dpi, width, height } = await deviceInfo.screen;
             ws.send(
                 JSON.stringify({
                     action: 'registerDevice',
                     payload: {
-                        x:0,y:0,width,height,
-                        dpi,
+                        screen:{
+                            x:0,
+                            y:0,
+                            width,
+                            height,
+                            dpi
+                        },
                         deviceId: this.deviceId,
                         password: this.passwordHash,
-                        platform: "ADR"
+                        platform: 'ADR'
                     }
                 })
             );
 
-            const t = setInterval(()=>{
-                if(ws.readyState === WebSocket.OPEN){
-                    this.sendJsonMessage({ping:1})
-                }else{
-                    clearInterval(t)
+            const t = setInterval(() => {
+                if (ws.readyState === WebSocket.OPEN) {
+                    this.sendJsonMessage({ ping: 1 });
+                } else {
+                    clearInterval(t);
                 }
-            },5000)
+            }, 5000);
         };
 
         ws.onmessage = async event => {
@@ -150,6 +187,7 @@ export default class WebSocketAndroidClient {
 
                 switch (eventType) {
                     case 'deviceInfo': {
+                        device.setDevideInfo({clientConnected:true})
                         const deviceInfo = await this.getDeviceInfo();
                         this.sendJsonMessage({
                             action: 'deviceMsg',
@@ -157,7 +195,6 @@ export default class WebSocketAndroidClient {
                                 deviceInfo
                             }
                         });
-                        device.setServiceMediaIsRunning(true)
                         this.handleWebrtc();
                         return;
                     }
@@ -176,7 +213,7 @@ export default class WebSocketAndroidClient {
                         return;
                     }
                     case 'stopPushingImage': {
-                        device.setServiceMediaIsRunning(false)
+                        device.setServiceMediaIsRunning(false);
                         return;
                     }
                     default: {
@@ -188,22 +225,21 @@ export default class WebSocketAndroidClient {
         };
 
         ws.onclose = ({ code, reason }) => {
-            device.setServiceMediaIsRunning(false)
+            device.setServiceMediaIsRunning(false);
             console.log('WebSocket connection closed.');
             if (code !== WsCloseCode.WS_CLOSE_STOP_RECONNECT) {
                 setTimeout(() => {
                     this.retry_count += 1;
                     if (this.retry_count < 10) {
-                        this.init()
+                        this.init();
                     } else {
-                        this.retry_count = 0
-                        device.setConnected(DeviceConnect.Closed)                        
-                        alert('连接服务端失败！');
+                        this.retry_count = 0;
+                        device.setConnected(DeviceConnect.Closed);
                     }
                 }, 1000);
-            }else{
-                this.retry_count = 0
-                device.setConnected(DeviceConnect.Inited)  
+            } else {
+                this.retry_count = 0;
+                device.setConnected(DeviceConnect.Inited);
             }
         };
 
@@ -213,15 +249,15 @@ export default class WebSocketAndroidClient {
     }
 
     async getDeviceInfo() {
-        const platform = "ADR"
-        const arch ="amd64"
+        const platform = 'ADR';
+        const arch = 'amd64';
         const res = await new AppAPI().check_service();
         const deviceInfo = JSON.parse(res);
-        const {dpi,width,height}  = await deviceInfo.screen
+        const { dpi, width, height } = await deviceInfo.screen;
 
         return {
-            inputIsOpen:!!WebSocketCtlClient.inputIsOpen(),
-            mediaIsStart: true,
+            inputIsOpen: !!deviceInfo.inputIsOpen,
+            mediaIsStart: !!deviceInfo.mediaIsStart,
             compressQuality: 1,
             delaySendImageDataMs: 1000,
             delayPullEventMs: 1000,
@@ -234,7 +270,6 @@ export default class WebSocketAndroidClient {
                 dpi
             }
         };
-        
     }
     isOpen() {
         return this.socket && this.socket.readyState === WebSocket.OPEN;
