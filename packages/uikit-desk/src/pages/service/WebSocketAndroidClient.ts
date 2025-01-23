@@ -11,12 +11,12 @@ export default class WebSocketAndroidClient {
     winId: string;
     passwordHash: string;
     url: string;
-    peerConnection: RTCPeerConnection;
     retry_count: number = 0;
+    device: DesktopDevices;
+    peerConnection: RTCPeerConnection;
     dataChannel_control?: RTCDataChannel;
     dataChannel_chat?: RTCDataChannel;
     dataChannel_screen?: RTCDataChannel;
-    device: DesktopDevices;
 
     constructor(
         url: string,
@@ -57,6 +57,39 @@ export default class WebSocketAndroidClient {
             dataChannel_control.send(message);
         }
     }
+    createDataChannels() {
+        if (!this.peerConnection) return;
+        this.dataChannel_control = this.peerConnection.createDataChannel('control');
+        this.dataChannel_control.onopen = async () => {
+            updateApp();
+            this.dataChannel_control!.send(JSON.stringify({ deviceInfo: await this.getDeviceInfo() }));
+        };
+        this.dataChannel_control.onmessage = e => {
+            console.log('dataChannel_control', e.data);
+            const event = JSON.parse(e.data);
+            new AppAPI().postControlEvent(event);
+        };
+        this.dataChannel_control.onclose = () => {
+            updateApp();
+            this.dataChannel_control = undefined;  // 避免使用已关闭的 DataChannel
+        };
+    
+        this.dataChannel_chat = this.peerConnection.createDataChannel('chat');
+        this.dataChannel_chat.onopen = () => updateApp();
+        this.dataChannel_chat.onmessage = e => console.log('Received:', e.data);
+        this.dataChannel_chat.onclose = () => {
+            updateApp();
+            this.dataChannel_chat = undefined;
+        };
+    
+        this.dataChannel_screen = this.peerConnection.createDataChannel('screen');
+        this.dataChannel_screen.onopen = () => updateApp();
+        this.dataChannel_screen.onmessage = e => console.log('Received:', e.data);
+        this.dataChannel_screen.onclose = () => {
+            updateApp();
+            this.dataChannel_screen = undefined;
+        };
+    }
     async handleWebrtc() {
         if (!this.peerConnection || this.peerConnection.signalingState == 'closed') {
             this.peerConnection = new RTCPeerConnection({
@@ -78,41 +111,43 @@ export default class WebSocketAndroidClient {
             updateApp();
         };
 
-        this.dataChannel_control = this.peerConnection.createDataChannel('control');
+        this.createDataChannels();
 
-        this.dataChannel_control.onopen = async () => {
-            updateApp()
-            this.dataChannel_control!.send(
-                JSON.stringify({ deviceInfo: await this.getDeviceInfo() })
-            );
-        };
-        this.dataChannel_control.onmessage = e => {
-            console.log('dataChannel_control', e.data);
-            const event = JSON.parse(e.data);
-            new AppAPI().postControlEvent(event);
-        };
-        this.dataChannel_control.onclose = () => {
-            updateApp()
-        };
-        this.dataChannel_chat = this.peerConnection.createDataChannel('chat');
+        // this.dataChannel_control = this.peerConnection.createDataChannel('control');
 
-        this.dataChannel_chat.onopen = () => {
-            updateApp()
-        };
-        this.dataChannel_chat.onmessage = e => console.log('Received:', e.data);
+        // this.dataChannel_control.onopen = async () => {
+        //     updateApp()
+        //     this.dataChannel_control!.send(
+        //         JSON.stringify({ deviceInfo: await this.getDeviceInfo() })
+        //     );
+        // };
+        // this.dataChannel_control.onmessage = e => {
+        //     console.log('dataChannel_control', e.data);
+        //     const event = JSON.parse(e.data);
+        //     new AppAPI().postControlEvent(event);
+        // };
+        // this.dataChannel_control.onclose = () => {
+        //     updateApp()
+        // };
+        // this.dataChannel_chat = this.peerConnection.createDataChannel('chat');
 
-        this.dataChannel_chat.onclose = () => {
-            updateApp()
-        };
-        this.dataChannel_screen = this.peerConnection.createDataChannel('screen');
+        // this.dataChannel_chat.onopen = () => {
+        //     updateApp()
+        // };
+        // this.dataChannel_chat.onmessage = e => console.log('Received:', e.data);
 
-        this.dataChannel_screen.onopen = () => {
-            updateApp()
-        };
-        this.dataChannel_screen.onclose = () => {
-            updateApp()
-        };
-        this.dataChannel_screen.onmessage = e => console.log('Received:', e.data);
+        // this.dataChannel_chat.onclose = () => {
+        //     updateApp()
+        // };
+        // this.dataChannel_screen = this.peerConnection.createDataChannel('screen');
+
+        // this.dataChannel_screen.onopen = () => {
+        //     updateApp()
+        // };
+        // this.dataChannel_screen.onclose = () => {
+        //     updateApp()
+        // };
+        // this.dataChannel_screen.onmessage = e => console.log('Received:', e.data);
 
         this.peerConnection.onicecandidate = event => {
             updateApp()
@@ -214,6 +249,7 @@ export default class WebSocketAndroidClient {
                     }
                     case 'stopPushingImage': {
                         device.setServiceMediaIsRunning(false);
+                        device.setDevideInfo({clientConnected:false})
                         return;
                     }
                     default: {
@@ -225,17 +261,23 @@ export default class WebSocketAndroidClient {
         };
 
         ws.onclose = ({ code, reason }) => {
+            device.setDevideInfo({clientConnected:false})
             device.setServiceMediaIsRunning(false);
             console.log('WebSocket connection closed.');
             if (code !== WsCloseCode.WS_CLOSE_STOP_RECONNECT) {
                 setTimeout(() => {
                     this.retry_count += 1;
-                    if (this.retry_count < 10) {
-                        this.init();
-                    } else {
-                        this.retry_count = 0;
-                        device.setConnected(DeviceConnect.Closed);
+                    device.setDevideInfo({retry_count:this.retry_count})
+                    this.init();
+                    if(this.retry_count > 20){
+                        this.retry_count = 0
                     }
+                    // if (this.retry_count < 10) {
+                    //     this.init();
+                    // } else {
+                    //     this.retry_count = 0;
+                    //     device.setConnected(DeviceConnect.Closed);
+                    // }
                 }, 1000);
             } else {
                 this.retry_count = 0;

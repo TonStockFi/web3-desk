@@ -17,8 +17,10 @@ export default function Permissions({
     handleMediaService,
     serviceMediaIsRunning,
     connected,
+    onStopService,
     handleInputService
 }: {
+    onStopService: () => void;
     connected: number;
     screenRecordingIsAuthed: boolean;
     handleMediaService: any;
@@ -26,61 +28,19 @@ export default function Permissions({
     serviceInputIsOpen: boolean;
     serviceMediaIsRunning: boolean;
 }) {
-    if (0) {
-        return (
-            <View relative column>
-                <FormControl component="fieldset" variant="standard">
-                    <FormLabel component="legend">权限</FormLabel>
-                    {connected === DeviceConnect.Connected && (
-                        <Box sx={{ mt: 1, mb: 2 }}>
-                            <Button
-                                onClick={handleMediaService}
-                                startIcon={<StopCircleIcon />}
-                                color="error"
-                                variant="contained"
-                            >
-                                停止服务1
-                            </Button>
-                        </Box>
-                    )}
-                    <FormGroup>
-                        <FormControlLabel
-                            sx={{ mb: 0.5 }}
-                            control={
-                                <Switch
-                                    readOnly
-                                    onChange={() => {}}
-                                    checked={screenRecordingIsAuthed}
-                                    name="service"
-                                />
-                            }
-                            label="屏幕录制"
-                        />
-                        <FormControlLabel
-                            control={<Switch readOnly checked={serviceInputIsOpen} name="input" />}
-                            label="输入控制"
-                        />
-                    </FormGroup>
-                </FormControl>
-            </View>
-        );
-    }
     return (
         <FormControl component="fieldset" variant="standard">
             <View hide={!isDesktop()} absFull zIdx={1} top={serviceMediaIsRunning ? 80 : 22}></View>
-
             <FormLabel component="legend">权限</FormLabel>
-            {Boolean(
-                connected === DeviceConnect.Connected || connected === DeviceConnect.Connecting
-            ) && (
+            {Boolean(connected === DeviceConnect.Connected) && (
                 <Box sx={{ mt: 2, mb: 2 }}>
                     <Button
-                        onClick={handleMediaService}
+                        onClick={onStopService}
                         startIcon={<StopCircleIcon />}
                         color="error"
                         variant="contained"
                     >
-                        停止服务1
+                        停止服务
                     </Button>
                 </Box>
             )}

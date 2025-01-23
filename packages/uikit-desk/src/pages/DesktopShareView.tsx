@@ -12,6 +12,7 @@ import AppAPI from '../common/AppApi';
 import DeviceCard from '../view/Device/DeviceCard';
 import { handleState, useScreenShareContext } from './ScreenShareProvider';
 
+import StatusCard from '../view/Device/StatusCard';
 import DesktopDevices, { DeviceConnect } from './service/DesktopDevices';
 
 export function QrCodeView({ text }: { text: string }) {
@@ -82,7 +83,7 @@ export default function DesktopShareView({
         );
     };
     return (
-        <View absFull px={12} borderBox key={updateAt}>
+        <View absFull px={12} borderBox key={updateAt} overflowYAuto>
             <View pt={0}>
                 <View mb12>
                     <DeviceCard
@@ -159,6 +160,9 @@ export default function DesktopShareView({
                         </View>
                     </CardContent>
                 </Card>
+            </View>
+            <View pt12>
+                <StatusCard winId={winId}></StatusCard>
             </View>
         </View>
     );

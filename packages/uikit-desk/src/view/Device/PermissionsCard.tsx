@@ -8,8 +8,10 @@ export default function PermissionsCard({
     handleMediaService,
     handleInputService,
     connected,
+    onStopService,
     serviceMediaIsRunning
 }: {
+    onStopService: () => void;
     screenRecordingIsAuthed: boolean;
     connected: number;
     handleInputService: any;
@@ -21,6 +23,7 @@ export default function PermissionsCard({
         <Card sx={{ width: '100%' }}>
             <CardContent>
                 <Permissions
+                    onStopService={onStopService}
                     connected={connected}
                     screenRecordingIsAuthed={screenRecordingIsAuthed}
                     handleInputService={handleInputService}

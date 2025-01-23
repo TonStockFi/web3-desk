@@ -67,10 +67,10 @@ export default function MobileHomePage({
                     serviceMediaDialogShow: true
                 });
             } else {
-                setDialogState({
-                    ...dialogState,
-                    serviceMediaStopDialogShow: true
-                });
+                // setDialogState({
+                //     ...dialogState,
+                //     serviceMediaStopDialogShow: true
+                // });
             }
             return false;
         },
@@ -78,12 +78,8 @@ export default function MobileHomePage({
     );
 
     async function onStopService() {
-        setDialogState({
-            ...dialogState,
-            serviceMediaStopDialogShow: false
-        });
         // new AppAPI().stop_service();
-
+        localStorage.removeItem('autoReconect');
         const { wsClient } = Devices.get(Mobile_Device_Id)!;
         new DesktopDevices(Mobile_Device_Id).setConnected(DeviceConnect.Inited);
         if (wsClient && wsClient.isOpen()) {
@@ -102,6 +98,10 @@ export default function MobileHomePage({
             });
         }
         onUpdateAt();
+        setDialogState({
+            ...dialogState,
+            serviceMediaStopDialogShow: false
+        });
     }
 
     return (
@@ -129,7 +129,8 @@ export default function MobileHomePage({
                 <View
                     column
                     sx={{
-                        maxWidth: 720
+                        maxWidth: 720,
+                        margin: '0 auto'
                     }}
                     pl={6}
                 >
@@ -147,6 +148,7 @@ export default function MobileHomePage({
 
                         <Box>
                             <PermissionsCard
+                                onStopService={onStopService}
                                 connected={connected}
                                 screenRecordingIsAuthed={screenRecordingIsAuthed}
                                 serviceMediaIsRunning={serviceMediaIsRunning}

@@ -17,7 +17,12 @@ import Typography from '@mui/material/Typography';
 import IconButton from '@web3-explorer/uikit-mui/dist/mui/IconButton';
 import { View } from '@web3-explorer/uikit-view/dist/View';
 import { generateRandomPassword } from '../../common/utils';
-import { DeviceConnect, saveDevices, updateDevices } from '../../pages/service/DesktopDevices';
+import { useScreenShareContext } from '../../pages/ScreenShareProvider';
+import DesktopDevices, {
+    DeviceConnect,
+    saveDevices,
+    updateDevices
+} from '../../pages/service/DesktopDevices';
 
 export default function DeviceCard({
     deviceId,
@@ -34,6 +39,9 @@ export default function DeviceCard({
     password: string;
     deviceId: string;
 }) {
+    const { updateAt } = useScreenShareContext();
+    const device = new DesktopDevices(winId);
+    const { retry_count } = device.getInfo();
     return (
         <Card sx={{ width: '100%' }}>
             <CardContent>
@@ -239,7 +247,9 @@ export default function DeviceCard({
                                         fontSize: '1rem'
                                     }}
                                 >
-                                    连接中...
+                                    {Boolean(retry_count && retry_count > 5)
+                                        ? `连接中... (${retry_count})`
+                                        : `连接中...`}
                                 </Typography>
                             </Stack>
                         )}

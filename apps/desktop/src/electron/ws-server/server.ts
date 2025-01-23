@@ -468,7 +468,7 @@ export class WebSocketServerWrapper {
                         console.log('sendClose', user_.client);
                         closeWs(
                             user_.ws,
-                            WsCloseCode.WS_CLOSE_STOP_RECONNECT,
+                            WsCloseCode.WS_CLOSE_RECONNECT,
                             ErrCodes.DEVICE_NOT_EXISTS
                         );
                     }

@@ -20,6 +20,7 @@ import DesktopDevices, {
 import WebSocketAndroidClient from './service/WebSocketAndroidClient';
 
 export async function initClients(winId: string) {
+    localStorage.setItem('autoReconect', '1');
     const device = Devices.get(winId)!;
     // const password = generateRandomPassword();
     // updateDevices(winId, { password });
@@ -100,6 +101,9 @@ export function MobilePagInner() {
         }
         new AppAPI().webview_is_ready();
         on_state_changed();
+        if (localStorage.getItem('autoReconect') === '1') {
+            initClients(Mobile_Device_Id);
+        }
         // @ts-ignore
         window['AppCallback'] = async (
             message:

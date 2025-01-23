@@ -10,6 +10,7 @@ export const Devices: Map<string, DeviceInfo> = new Map();
 
 export interface DeviceInfo {
     winId: string;
+    retry_count?:number;
     clientConnected?: boolean;
     connected?: number;
     serviceMediaIsRunning?: boolean;

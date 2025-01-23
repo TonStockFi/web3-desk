@@ -1,5 +1,5 @@
 import AppAPI from '../../common/AppApi';
-import { getVideoId, isMac } from '../../common/utils';
+import { getVideoId, isMac, updateApp } from '../../common/utils';
 import { WsCloseCode } from '../../types';
 import DesktopDevices, { DeviceConnect } from './DesktopDevices';
 
@@ -7,6 +7,7 @@ import WebSocketCtlClient from './WebSocketCtlClient';
 
 export default class WebSocketClient {
     sources: { name: string; id: string; display_id: string }[];
+    device: DesktopDevices;
     setSources(sources: { name: string; id: string; display_id: string }[]) {
         this.sources = sources;
     }
@@ -17,8 +18,12 @@ export default class WebSocketClient {
     winId: string;
     passwordHash: string;
     url: string;
-    peerConnection: RTCPeerConnection;
     retry_count: number = 0;
+
+    peerConnection: RTCPeerConnection;
+    dataChannel_control?: RTCDataChannel;
+    dataChannel_chat?: RTCDataChannel;
+    dataChannel_screen?: RTCDataChannel;
 
     constructor(
         url: string,
@@ -33,7 +38,11 @@ export default class WebSocketClient {
         this.winId = winId;
         this.password = password;
         this.passwordHash = passwordHash;
-        this.peerConnection = new RTCPeerConnection();
+        this.device = new DesktopDevices(this.winId);
+
+        this.peerConnection = new RTCPeerConnection({
+            // iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+        });
         this.init();
     }
     getPasswordHash() {
@@ -42,6 +51,12 @@ export default class WebSocketClient {
 
     getPassword() {
         return this.password;
+    }
+    sendChannalControlMessage(message: string) {
+        const { dataChannel_control } = this;
+        if (dataChannel_control && dataChannel_control.readyState === 'open') {
+            dataChannel_control.send(message);
+        }
     }
     stopVideo() {
         const videoElement = document.getElementById(
@@ -76,7 +91,7 @@ export default class WebSocketClient {
         }
         return { width, height };
     }
-    async handleScreen() {
+    async handleWebrtc() {
         let { sources } = this;
         if (sources.length === 0) {
             sources = await new AppAPI().get_sources(['window', 'screen']);
@@ -100,8 +115,12 @@ export default class WebSocketClient {
         });
 
         const videoElement = document.getElementById(getVideoId(screenSource)) as HTMLVideoElement;
+
+        
         if (!this.peerConnection || this.peerConnection.signalingState == 'closed') {
-            this.peerConnection = new RTCPeerConnection();
+            this.peerConnection = new RTCPeerConnection({
+                // iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+            });
         }
         videoElement!.srcObject! = stream;
         stream.getTracks().forEach(track => {
@@ -115,9 +134,72 @@ export default class WebSocketClient {
             params.encodings[0].maxFramerate = 30;
             sender.setParameters(params);
         });
-        // 处理 ICE 连接
+        
+        this.peerConnection.oniceconnectionstatechange = () => {
+            console.log("ICE Connection State:", this.peerConnection.iceConnectionState);
+            updateApp();
+        };
+        
+        this.peerConnection.onconnectionstatechange = () => {
+            console.log("Connection State:", this.peerConnection.connectionState);
+            updateApp();
+        };
+        
+        this.peerConnection.onsignalingstatechange = () => {
+            console.log("Signaling State:", this.peerConnection.signalingState);
+            updateApp();
+        };
+
+        this.dataChannel_control = this.peerConnection.createDataChannel('control');
+
+        this.dataChannel_control.onopen = async () => {
+            updateApp()
+            this.dataChannel_control!.send(
+                JSON.stringify({ deviceInfo: await this.getDeviceInfo() })
+            );
+        };
+        this.dataChannel_control.onmessage = async e => {
+            console.log('dataChannel_control', e.data);
+            const payload = JSON.parse(e.data)
+
+            const { x, y } = await this.getBounds();
+            if (payload.x !== undefined) {
+                payload.x = x + payload.x;
+            }
+            if (payload.y !== undefined) {
+                payload.y = y + payload.y;
+            }
+            WebSocketCtlClient.sendJsonMessage(payload);
+        };
+        this.dataChannel_control.onclose = () => {
+            updateApp()
+        };
+        this.dataChannel_chat = this.peerConnection.createDataChannel('chat');
+
+        this.dataChannel_chat.onopen = () => {
+            updateApp()
+        };
+        this.dataChannel_chat.onmessage = e => console.log('Received:', e.data);
+
+        this.dataChannel_chat.onclose = () => {
+            updateApp()
+        };
+
+        this.dataChannel_screen = this.peerConnection.createDataChannel('screen');
+
+        this.dataChannel_screen.onopen = () => {
+            updateApp()
+        };
+        this.dataChannel_screen.onclose = () => {
+            updateApp()
+        };
+
+        this.dataChannel_screen.onmessage = e => console.log('Received:', e.data);
+
         this.peerConnection.onicecandidate = event => {
+            updateApp()
             if (event.candidate) {
+                // console.log(">>>>>>>>>>> candidate send ",JSON.stringify(event.candidate))
                 this.sendJsonMessage({
                     action: 'deviceMsg',
                     payload: {
@@ -126,10 +208,10 @@ export default class WebSocketClient {
                 });
             }
         };
-        // 创建 SDP offer 并发送
         const offer = await this.peerConnection.createOffer();
         await this.peerConnection.setLocalDescription(offer);
-
+      
+        // console.log(">>>>>>>>>>> offer send ",JSON.stringify(offer))
         this.sendJsonMessage({
             action: 'deviceMsg',
             payload: {
@@ -137,6 +219,7 @@ export default class WebSocketClient {
             }
         });
     }
+
     async getSource() {
         let { sources } = this;
 
@@ -175,7 +258,7 @@ export default class WebSocketClient {
                 JSON.stringify({
                     action: 'registerDevice',
                     payload: {
-                        scrren:{
+                        screen:{
                             x,
                             y,
                             width,
@@ -207,6 +290,7 @@ export default class WebSocketClient {
                 switch (eventType) {
                     case 'deviceInfo': {
                         console.log('deviceInfo');
+                        device.setDevideInfo({clientConnected:true})
                         const deviceInfo = await this.getDeviceInfo();
                         this.sendJsonMessage({
                             action: 'deviceMsg',
@@ -215,7 +299,7 @@ export default class WebSocketClient {
                             }
                         });
                         device.setServiceMediaIsRunning(true);
-                        this.handleScreen();
+                        this.handleWebrtc();
                         return;
                     }
 
@@ -232,6 +316,7 @@ export default class WebSocketClient {
                     }
                     case 'stopPushingImage': {
                         this.stopVideo();
+                        device.setDevideInfo({clientConnected:false})
                         device.setServiceMediaIsRunning(false);
                         return;
                     }
@@ -251,6 +336,7 @@ export default class WebSocketClient {
         };
 
         ws.onclose = ({ code, reason }) => {
+            device.setDevideInfo({clientConnected:false})
             device.setServiceMediaIsRunning(false);
             this.stopVideo();
             console.log('WebSocket connection closed.');
@@ -262,7 +348,6 @@ export default class WebSocketClient {
                     } else {
                         this.retry_count = 0;
                         device.setConnected(DeviceConnect.Closed);
-                        alert('连接服务端失败！');
                     }
                 }, 1000);
             } else {

@@ -6,14 +6,13 @@ import CardContent from '@mui/material/CardContent';
 import Box from '@web3-explorer/uikit-mui/dist/mui/Box';
 import CircularProgress from '@web3-explorer/uikit-mui/dist/mui/CircularProgress';
 import { View } from '@web3-explorer/uikit-view/dist/View';
-import { Mobile_Device_Id } from '../../constant';
 import { useScreenShareContext } from '../../pages/ScreenShareProvider';
 import DesktopDevices, { DeviceConnect } from '../../pages/service/DesktopDevices';
 import WebSocketAndroidClient from '../../pages/service/WebSocketAndroidClient';
 
 export default function StatusCard({ winId }: { winId: string }) {
     const { updateAt } = useScreenShareContext();
-    const device = new DesktopDevices(Mobile_Device_Id);
+    const device = new DesktopDevices(winId);
     const state = device.getState();
     const deviceInfo = device.getInfo()!;
     const wsClient = deviceInfo!.wsClient as WebSocketAndroidClient;
@@ -65,7 +64,7 @@ export default function StatusCard({ winId }: { winId: string }) {
                 </View>
                 <View column w100p pr12 borderBox hide={!deviceInfo.clientConnected}>
                     <View rowVCenter jSpaceBetween hide={!deviceInfo.serviceMediaIsRunning}>
-                        <View>
+                        <View rowVCenter>
                             <Box
                                 sx={{
                                     display: 'flex',
@@ -75,7 +74,7 @@ export default function StatusCard({ winId }: { winId: string }) {
                             >
                                 <CircularProgress size={14} />
                             </Box>
-                            <View ml={14} text={'正在推送'} mr12></View>
+                            <View textSmall ml={16} text={'正在推送'} mr12></View>
                         </View>
                     </View>
                     <View rowVCenter jSpaceBetween>
