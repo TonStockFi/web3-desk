@@ -26,46 +26,90 @@ export default function Permissions({
     serviceInputIsOpen: boolean;
     serviceMediaIsRunning: boolean;
 }) {
+    if (0) {
+        return (
+            <View relative column>
+                <FormControl component="fieldset" variant="standard">
+                    <FormLabel component="legend">权限</FormLabel>
+                    {connected === DeviceConnect.Connected && (
+                        <Box sx={{ mt: 1, mb: 2 }}>
+                            <Button
+                                onClick={handleMediaService}
+                                startIcon={<StopCircleIcon />}
+                                color="error"
+                                variant="contained"
+                            >
+                                停止服务1
+                            </Button>
+                        </Box>
+                    )}
+                    <FormGroup>
+                        <FormControlLabel
+                            sx={{ mb: 0.5 }}
+                            control={
+                                <Switch
+                                    readOnly
+                                    onChange={() => {}}
+                                    checked={screenRecordingIsAuthed}
+                                    name="service"
+                                />
+                            }
+                            label="屏幕录制"
+                        />
+                        <FormControlLabel
+                            control={<Switch readOnly checked={serviceInputIsOpen} name="input" />}
+                            label="输入控制"
+                        />
+                    </FormGroup>
+                </FormControl>
+            </View>
+        );
+    }
     return (
-        <View relative column>
-            <View absFull zIdx={1} top={serviceMediaIsRunning ? 80 : 22}></View>
-            <FormControl component="fieldset" variant="standard">
-                <FormLabel component="legend">权限</FormLabel>
-                {Boolean(connected === DeviceConnect.Connected) && (
-                    <Box sx={{ mt: 1, mb: 2 }}>
-                        <Button
-                            onClick={handleMediaService}
-                            startIcon={<StopCircleIcon />}
-                            color="error"
-                            variant="contained"
-                        >
-                            停止服务
-                        </Button>
-                    </Box>
-                )}
-                <FormGroup>
-                    <FormControlLabel
-                        sx={{ mb: 0.5 }}
-                        control={
-                            <Switch
-                                readOnly
-                                onChange={() => {
-                                    if (!isDesktop()) {
-                                        handleInputService();
-                                    }
-                                }}
-                                checked={screenRecordingIsAuthed}
-                                name="service"
-                            />
-                        }
-                        label="屏幕录制"
-                    />
-                    <FormControlLabel
-                        control={<Switch readOnly checked={serviceInputIsOpen} name="input" />}
-                        label="输入控制"
-                    />
-                </FormGroup>
-            </FormControl>
-        </View>
+        <FormControl component="fieldset" variant="standard">
+            <View hide={!isDesktop()} absFull zIdx={1} top={serviceMediaIsRunning ? 80 : 22}></View>
+
+            <FormLabel component="legend">权限</FormLabel>
+            {Boolean(
+                connected === DeviceConnect.Connected || connected === DeviceConnect.Connecting
+            ) && (
+                <Box sx={{ mt: 2, mb: 2 }}>
+                    <Button
+                        onClick={handleMediaService}
+                        startIcon={<StopCircleIcon />}
+                        color="error"
+                        variant="contained"
+                    >
+                        停止服务1
+                    </Button>
+                </Box>
+            )}
+
+            <FormGroup>
+                <FormControlLabel
+                    sx={{ mb: 1.5, mt: 1.5 }}
+                    control={
+                        <Switch
+                            readOnly={isDesktop()}
+                            checked={screenRecordingIsAuthed}
+                            onClick={isDesktop() ? undefined : handleMediaService}
+                            name="service"
+                        />
+                    }
+                    label="屏幕录制"
+                />
+                <FormControlLabel
+                    control={
+                        <Switch
+                            readOnly={isDesktop()}
+                            checked={serviceInputIsOpen}
+                            onClick={isDesktop() ? undefined : handleInputService}
+                            name="input"
+                        />
+                    }
+                    label="输入控制"
+                />
+            </FormGroup>
+        </FormControl>
     );
 }

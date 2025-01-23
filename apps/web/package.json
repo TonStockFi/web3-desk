@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "deploy_android":"cp -a ./dist/ ../android/app/src/main/assets && yarn deploy_opencv",
     "deploy_opencv":"cp -a ../desktop/public/opencv.js ../android/app/src/main/assets/",
-    "deploy_server": "rsync -avz -e ssh ./dist/ myserver:~/web3-desk/apps/docker/nginx-server/data/",
+    "deploy_server": "rsync --delete -avz -e ssh ./dist/ myserver:~/web3-desk/apps/docker/nginx-server/data/",
     "lint": "eslint .",
     "preview": "vite preview",
     "deploy": "wrangler pages deploy dist --project-name web3-desk --commit-dirty=true"
