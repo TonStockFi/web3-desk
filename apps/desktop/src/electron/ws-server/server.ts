@@ -27,7 +27,8 @@ export function getLocalIPAddress() {
 
 export enum WsCloseCode {
     WS_CLOSE_STOP_RECONNECT = 3001,
-    WS_CLOSE_RECONNECT = 3002
+    WS_CLOSE_RECONNECT = 3002,
+    WS_CLOSE_RECONNECT_WAIT_DEVICE = 3003
 }
 
 export enum ErrCodes {
@@ -468,7 +469,7 @@ export class WebSocketServerWrapper {
                         console.log('sendClose', user_.client);
                         closeWs(
                             user_.ws,
-                            WsCloseCode.WS_CLOSE_RECONNECT,
+                            WsCloseCode.WS_CLOSE_RECONNECT_WAIT_DEVICE,
                             ErrCodes.DEVICE_NOT_EXISTS
                         );
                     }
