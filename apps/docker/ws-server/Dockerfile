@@ -15,7 +15,6 @@ RUN npm install typescript ts-node ws uuid
 # 复制当前目录所有文件到容器内
 COPY ./main.ts .
 COPY ./server.ts .
-COPY ./BufferProcessor.ts .
 
 # 运行 TypeScript 编译
 RUN npx tsc --init

@@ -44,10 +44,15 @@ export default class WebSocketAndroidClient {
     getPassword() {
         return this.password;
     }
-    sendChannalScreenMessage(message: string) {
+    async sendDeviceInfo(){
+        const message = JSON.stringify({ deviceInfo: await this.getDeviceInfo() })
+        this.sendChannalControlMessage(message)
+    }
+    sendChannalScreenMessage(message: string | ArrayBuffer) {
         const { dataChannel_screen } = this;
         if (dataChannel_screen && dataChannel_screen.readyState === 'open') {
             this.device.setServiceMediaIsRunning(true);
+            //@ts-ignore
             dataChannel_screen.send(message);
         }
     }
@@ -62,7 +67,7 @@ export default class WebSocketAndroidClient {
         this.dataChannel_control = this.peerConnection.createDataChannel('control');
         this.dataChannel_control.onopen = async () => {
             updateApp();
-            this.dataChannel_control!.send(JSON.stringify({ deviceInfo: await this.getDeviceInfo() }));
+            this.sendDeviceInfo()
         };
         this.dataChannel_control.onmessage = e => {
             console.log('dataChannel_control', e.data);

@@ -5,6 +5,7 @@ console.log("preload")
 import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('backgroundApi', {
+    get_opencv_js:()=>ipcRenderer.invoke('message', {action:"get_opencv_js",payload:{}}),
     get_app_info:(id: string)=>ipcRenderer.invoke('message', {action:"get_app_info",payload:{id}}),
     webview_is_ready:()=>ipcRenderer.invoke('message', {action:"webview_is_ready",payload:{}}),
     start_server:(port:number)=>ipcRenderer.invoke('message', {action:"start_server",payload:{port}}),

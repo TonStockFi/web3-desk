@@ -82,6 +82,16 @@ export function MobilePagInner() {
         AppAPI.serviceInputIsOpen = inputIsOpen;
 
         saveDevices();
+        const device = new DesktopDevices(Mobile_Device_Id);
+        const wsClient = device.getInfo().wsClient as WebSocketAndroidClient;
+        if (
+            wsClient &&
+            wsClient.dataChannel_control &&
+            device.getInfo().clientConnected &&
+            wsClient.dataChannel_control?.readyState === 'open'
+        ) {
+            wsClient.sendDeviceInfo();
+        }
         if (mediaIsStart) {
             setConfirming(false);
             setDialogState({

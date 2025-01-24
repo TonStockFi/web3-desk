@@ -1,4 +1,5 @@
 import { View } from '@web3-explorer/uikit-view/dist/View';
+import { useTimeoutLoop } from '@web3-explorer/utils';
 import { useEffect, useRef, useState } from 'react';
 import { Mobile_Device_Id } from '../constant';
 import DesktopDevices from '../pages/service/DesktopDevices';
@@ -39,15 +40,36 @@ export default function DecisionView() {
         };
     }, []);
     const wsClient = device.getInfo().wsClient as WebSocketAndroidClient;
+    useTimeoutLoop(async () => {
+        if (!screenImage) {
+            return;
+        }
+        const { clientConnected } = device.getInfo();
 
+        if (!clientConnected) {
+            return;
+        }
+        const wsClient = device.getInfo().wsClient as WebSocketAndroidClient;
+        if (!wsClient) {
+            return;
+        }
+        if (!wsClient.isOpen()) {
+            return;
+        }
+        const isScreenChannalOpen =
+            wsClient.dataChannel_screen && wsClient.dataChannel_screen.readyState === 'open';
+        if (!isScreenChannalOpen) {
+            wsClient.sendMessage(dataURIToArrayBuffer(screenImage));
+        }
+    }, 1000);
     return (
         <View center column overflowYAuto bgColor="#3b3b3b">
             <View w={180} h={400} center mb12 column>
                 <img
                     ref={imgRef}
                     onLoad={() => {
-                        // const arrayBuffer = dataURIToArrayBuffer(screenImage);
-                        wsClient && wsClient.sendChannalScreenMessage(screenImage);
+                        const arrayBuffer = dataURIToArrayBuffer(screenImage);
+                        wsClient && wsClient.sendChannalScreenMessage(arrayBuffer);
                     }}
                     src={screenImage}
                     style={{ width: '100%', height: '100%' }}
